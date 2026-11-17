@@ -79,7 +79,7 @@ export const DOME_RING = 150; // width of the plinth ring around each dome
 export const CANAL = { halfW: 210, walk: 120, z0: -15250, z1: -7150, y: -38, vaultR: 420 };
 export const CASCADE_Z = -7150; // the canal head, where water falls from the terraces
 
-export const HALO = { r: 1700, y: 1900, width: 150 };
+export const HALO = { r: 1700, y: 2300, width: 150, cableY: 3700 };
 
 export const HARBOURS = [-8600, -6100, -3600, -1100, 1400, 3900]; // pier stations along each flank
 export const PIER = { len: 1500, width: 110, y: -600 };

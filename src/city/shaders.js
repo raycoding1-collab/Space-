@@ -13,7 +13,7 @@ export const CITY_U = {
   uHazeK: { value: 1 / 70000 },
   uHazeFloor: { value: -420 },
   uHazeCol: { value: new THREE.Vector3(0.36, 0.5, 0.82) },
-  uSunDirC: { value: WORLD.sunDir.clone() },
+  uSunDirC: { value: WORLD.sunDir },
 };
 
 // ------------------------------------------------------------------ GLSL: common helpers
@@ -92,18 +92,26 @@ vec3 applyHaze(vec3 col, vec3 p) {
 
 // ------------------------------------------------------------------ facade surfaces
 const FACADE = /* glsl */ `
-uniform vec4 uFacA;   // floorH, bayW, column every N bays, mechanical floor every N floors
-uniform vec4 uFacB;   // pattern (main), pattern (podium), lit probability, warmth 0..1
-uniform vec4 uFacC;   // podium top (m), podium floorH, lobby height (m), segment length (m, 0 = off)
-uniform vec3 uFrame;
-uniform vec3 uGlass;
-uniform vec3 uPanel;
-uniform vec3 uAccent;
-uniform vec3 uTrim;
-uniform vec3 uRoof;
-uniform float uLitI;
-uniform float uTrimI;
-uniform float uAO;
+// Style table: every facade language is 9 texels in uStyleTex; a building picks its row per instance.
+uniform sampler2D uStyleTex;
+varying float vStyleC;
+vec4 uFacA;   // floorH, bayW, column every N bays, mechanical floor every N floors
+vec4 uFacB;   // pattern (main), pattern (podium), lit probability, warmth 0..1
+vec4 uFacC;   // podium top (m), podium floorH, lobby height (m), segment length (m, 0 = off)
+vec3 uFrame, uGlass, uPanel, uAccent, uTrim, uRoof;
+float uLitI, uTrimI, uAO, uStyleSeed;
+void loadStyle() {
+  int r = int(vStyleC + 0.5);
+  uFacA = texelFetch(uStyleTex, ivec2(0, r), 0);
+  uFacB = texelFetch(uStyleTex, ivec2(1, r), 0);
+  uFacC = texelFetch(uStyleTex, ivec2(2, r), 0);
+  vec4 t3 = texelFetch(uStyleTex, ivec2(3, r), 0); uFrame = t3.rgb; uLitI = t3.a;
+  vec4 t4 = texelFetch(uStyleTex, ivec2(4, r), 0); uGlass = t4.rgb; uTrimI = t4.a;
+  vec4 t5 = texelFetch(uStyleTex, ivec2(5, r), 0); uPanel = t5.rgb; uAO = t5.a;
+  vec4 t6 = texelFetch(uStyleTex, ivec2(6, r), 0); uAccent = t6.rgb; uStyleSeed = t6.a;
+  uTrim = texelFetch(uStyleTex, ivec2(7, r), 0).rgb;
+  uRoof = texelFetch(uStyleTex, ivec2(8, r), 0).rgb;
+}
 
 struct CS { vec3 alb; float rough; float metal; vec3 emis; float h; float ao; };
 
@@ -302,6 +310,8 @@ CS stone(vec2 f, float seed) {
 }
 
 CS citySurface(vec2 f, float zone, float seed, vec3 wp) {
+  loadStyle();
+  seed = fract(seed + uStyleSeed);
   int zn = int(zone + 0.5);
   CS o;
   float litP = uFacB.z, warm = clamp(uFacB.w + (seed - 0.5) * 0.3, 0.0, 1.0);
@@ -529,6 +539,66 @@ CS groundPolar(vec3 wp, float level, float bandIn, float bandOut) {
 }
 `;
 
+// ------------------------------------------------------------------ biome terrain and water
+const TERRAIN = /* glsl */ `
+uniform vec4 uTerr;    // water level, sand band, rock slope threshold, style (0 lake, 1 forest, 2 orchard)
+uniform vec3 uTerrC;   // terrain centre (x, z) and radius
+struct CS { vec3 alb; float rough; float metal; vec3 emis; float h; float ao; };
+CS terrain(vec3 wp, vec3 wn) {
+  CS o;
+  float fw = fwidth(wp.x) + fwidth(wp.z);
+  float far = smoothstep(1.5, 8.0, fw);
+  float slope = 1.0 - clamp(wn.y, 0.0, 1.0);
+  float n1 = fbm2(wp.xz / 40.0), n2 = vnoise(wp.xz / 6.0);
+  vec3 grassA = vec3(0.07, 0.13, 0.04), grassB = vec3(0.16, 0.22, 0.07), dry = vec3(0.3, 0.28, 0.14);
+  vec3 col = mix(grassA, grassB, smoothstep(0.3, 0.7, n1));
+  col = mix(col, dry, smoothstep(0.62, 0.8, n1) * 0.5);
+  col *= mix(0.85, 1.12, mix(n2, 0.5, far));
+  vec3 rock = mix(vec3(0.3, 0.28, 0.26), vec3(0.46, 0.43, 0.38), vnoise(wp.xz / 12.0 + wp.y / 9.0));
+  float strata = 0.5 + 0.5 * sin(wp.y * 0.35 + n1 * 6.0);
+  rock *= mix(0.85, 1.1, strata);
+  float r = smoothstep(uTerr.z - 0.08, uTerr.z + 0.08, slope);
+  col = mix(col, rock, r);
+  // beaches
+  float sand = 1.0 - smoothstep(uTerr.x + 1.0, uTerr.x + uTerr.y, wp.y);
+  col = mix(col, vec3(0.62, 0.56, 0.42), sand * (1.0 - r));
+  // under water: darker silt
+  col = mix(col, vec3(0.12, 0.13, 0.1), 1.0 - smoothstep(uTerr.x - 6.0, uTerr.x, wp.y));
+  if (uTerr.w > 1.5) {
+    // orchard: concentric crop terraces in bands of colour, with planting rows
+    float rr = length(wp.xz - uTerrC.xy);
+    float band = floor(rr / 88.0);
+    float hb = hashI(vec2(band, 7.0));
+    vec3 crop = hb < 0.25 ? vec3(0.55, 0.45, 0.16) : (hb < 0.45 ? vec3(0.32, 0.26, 0.42) : (hb < 0.7 ? vec3(0.12, 0.22, 0.06) : (hb < 0.85 ? vec3(0.5, 0.2, 0.12) : vec3(0.2, 0.3, 0.08))));
+    float rows = fpc(rr / 3.2, max(fwidth(rr / 3.2), 1e-4), 0.55);
+    crop *= mix(0.7, 1.1, rows);
+    col = mix(col, crop, (1.0 - r) * step(uTerr.x + 2.0, wp.y));
+  }
+  o.alb = col; o.rough = mix(0.85, 0.7, r); o.metal = 0.0; o.emis = vec3(0.0);
+  o.h = (n2 * 0.6 + r * strata * 1.5) * (1.0 - far); o.ao = mix(0.8, 1.0, n1);
+  return o;
+}
+`;
+
+const WATER = /* glsl */ `
+uniform vec3 uWaterDeep;
+uniform vec3 uWaterShallow;
+struct CS { vec3 alb; float rough; float metal; vec3 emis; float h; float ao; };
+CS water(vec3 wp) {
+  CS o;
+  float t = uCityTime;
+  float fw = fwidth(wp.x) + fwidth(wp.z);
+  float far = smoothstep(0.6, 4.0, fw);
+  float w1 = vnoise(wp.xz / 7.0 + vec2(t * 0.11, t * 0.07));
+  float w2 = vnoise(wp.xz / 2.6 - vec2(t * 0.17, -t * 0.13));
+  float w3 = vnoise(wp.xz / 23.0 + vec2(-t * 0.03, t * 0.05));
+  o.h = (w1 * 0.35 + w2 * 0.15 + w3 * 0.6) * (1.0 - far) * 0.8;
+  o.alb = mix(uWaterDeep, uWaterShallow, w3 * 0.4);
+  o.rough = mix(0.035, 0.09, far); o.metal = 0.0; o.emis = vec3(0.0); o.ao = 1.0;
+  return o;
+}
+`;
+
 // ------------------------------------------------------------------ material patching
 const VERT_PARS = /* glsl */ `
 attribute vec2 aFac;
@@ -538,7 +608,12 @@ varying float vZoneC;
 varying float vSeedC;
 varying vec3 vWorldC;
 varying vec3 vWNormC;
+varying float vStyleC;
 uniform float uSeed;
+uniform float uStyle;
+#ifdef USE_INSTANCING
+attribute float aStyle;
+#endif
 `;
 const VERT_MAIN = /* glsl */ `
 {
@@ -546,7 +621,9 @@ const VERT_MAIN = /* glsl */ `
   vec4 wpc = vec4(transformed, 1.0);
   vec3 wnc = objectNormal;
   vSeedC = uSeed;
+  vStyleC = uStyle;
 #ifdef USE_INSTANCING
+  if (uStyle < 0.0) vStyleC = aStyle;
   sH = length(instanceMatrix[0].xyz); sV = length(instanceMatrix[1].xyz);
   wpc = instanceMatrix * wpc;
   wnc = mat3(instanceMatrix) * wnc;
@@ -567,18 +644,20 @@ const VERT_MAIN = /* glsl */ `
  * kind: 'facade' | 'plating' | 'ground' | 'haze' (haze only, keeps the material's own look)
  */
 export function cityPatch(mat, kind, uniforms = {}, { groundMode = 'cart', key = '' } = {}) {
-  const U = { ...CITY_U, uSeed: { value: Math.random() }, ...uniforms };
+  const U = { ...CITY_U, uSeed: { value: Math.random() }, uStyle: { value: 0 }, ...uniforms };
   mat.userData.cityUniforms = U;
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
     const usesAttr = kind === 'facade';
-    let vp = (usesAttr ? VERT_PARS : VERT_PARS.replace('attribute vec2 aFac;\nattribute float aZone;\n', ''));
+    let vp = (usesAttr ? VERT_PARS : VERT_PARS.replace('attribute vec2 aFac;\nattribute float aZone;\n', '').replace('#ifdef USE_INSTANCING\nattribute float aStyle;\n#endif', '').replace('if (uStyle < 0.0) vStyleC = aStyle;', ''));
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>\n${CITY_COMMON}\n${vp}`)
-      .replace('#include <project_vertex>', `#include <project_vertex>\n${usesAttr ? VERT_MAIN : VERT_MAIN.replace('vFacC = aFac * vec2(sH, sV);', 'vFacC = vec2(0.0);').replace('if (aZone > 2.5 && aZone < 3.5) vFacC = aFac * sH;', '').replace('vZoneC = aZone;', 'vZoneC = 0.0;')}`);
+      .replace('#include <project_vertex>', `#include <project_vertex>\n${usesAttr ? VERT_MAIN : VERT_MAIN.replace('if (uStyle < 0.0) vStyleC = aStyle;', '').replace('vFacC = aFac * vec2(sH, sV);', 'vFacC = vec2(0.0);').replace('if (aZone > 2.5 && aZone < 3.5) vFacC = aFac * sH;', '').replace('vZoneC = aZone;', 'vZoneC = 0.0;')}`);
     let surf = '', call = '';
     if (kind === 'facade') { surf = FACADE; call = 'CS cs = citySurface(vFacC, vZoneC, vSeedC, vWorldC);'; }
     else if (kind === 'plating') { surf = PLATING; call = 'CS cs = plating(vWorldC, normalize(vWNormC), uSeed * 31.0);'; }
+    else if (kind === 'terrain') { surf = TERRAIN; call = 'CS cs = terrain(vWorldC, normalize(vWNormC));'; }
+    else if (kind === 'water') { surf = WATER; call = 'CS cs = water(vWorldC);'; }
     else if (kind === 'ground') {
       surf = GROUND;
       call = groundMode === 'polar' ? 'CS cs = groundPolar(vWorldC, 0.0, 0.0, 0.0);' : 'CS cs = groundCart(vWorldC);';

@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import { createCityMaterials } from './materials.js';
 import { cityPatch } from './shaders.js';
 import { buildFoundation } from './foundation.js';
+import { buildDistricts } from './districts.js';
+import { buildSpire } from './spire.js';
+import { buildDomes } from './domes.js';
 import { GRID, POLAR, SPIRE } from './layout.js';
 import { lightUniforms } from '../ship/lights.js';
 import { conduitTime } from '../ship/conduit.js';
@@ -32,7 +35,7 @@ export function emptyBlocks() {
   return { tex, data, NI, NJ, i0: NI / 2, j0: NJ / 2 };
 }
 
-export async function buildCity({ quality, step }) {
+export async function buildCity({ quality, step, scene }) {
   const root = new THREE.Group();
   root.name = 'ELYSION';
   const ctx = { animated: [], frame: [] };
@@ -41,6 +44,12 @@ export async function buildCity({ quality, step }) {
   const blocks = emptyBlocks();
   setupGround(M, blocks);
   root.add(buildFoundation(M, ctx));
+  await step('Raising the districts', 0.45);
+  root.add(buildDistricts(M, ctx, blocks));
+  await step('Raising the Crown Spire', 0.6);
+  root.add(buildSpire(M, ctx));
+  await step('Sealing the biome domes', 0.7);
+  root.add(buildDomes(M, ctx, scene.background));
 
   ctx.animated.push((t) => { M.U.uCityTime.value = t; conduitTime.value = t; lightUniforms.uTime.value = t; });
   return {

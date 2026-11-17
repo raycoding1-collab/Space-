@@ -14,6 +14,11 @@ const params = new URLSearchParams(location.search);
 const SHIP_ID = params.get('ship') === 'city' ? 'city' : 'vespera';
 const { PROFILE } = SHIP_ID === 'city' ? await import('./city/profile.js') : await import('./ship/profile.js');
 const POIS = PROFILE.pois, TOUR = PROFILE.tour, LABELS = PROFILE.labels;
+// per-ship art direction of the world (e.g. a lower sun over the city)
+if (PROFILE.world?.sunDir) WORLD.sunDir.copy(PROFILE.world.sunDir).normalize();
+if (PROFILE.world?.sunColor) WORLD.sunColor.copy(PROFILE.world.sunColor);
+if (PROFILE.world?.sunIntensity) WORLD.sunIntensity = PROFILE.world.sunIntensity;
+if (params.get('sun')) WORLD.sunDir.set(...params.get('sun').split(',').map(Number)).normalize();
 document.title = PROFILE.docTitle;
 {
   const set = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt; };

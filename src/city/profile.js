@@ -22,13 +22,15 @@ export const PROFILE = {
   labels: LABELS,
   tour: TOUR,
   labelFade: 90000,
+  // a lower, warmer sun than VESPERA's: side light and long shadows across the districts
+  world: { sunDir: new THREE.Vector3(0.82, 0.45, 0.35), sunColor: new THREE.Color(1.0, 0.9, 0.78), sunIntensity: 3.6 },
   near: 1.0,
   rig: { maxDistance: 260000, minDistance: 20, flySpeed: 600, flyMax: 40000, arc: 'up', belowY: -900, halfBeam: 6200 },
   shadow: {
     adaptive: true, center: new THREE.Vector3(2500, 0, 0), halfX: 11500, halfZ: 19000, dist: 40000, near: 100, far: 90000,
     normalBias: 1.5, minHalf: 450, radiusK: 1.25,
   },
-  async build({ quality, step }) {
-    return buildCity({ quality, step });
+  async build({ quality, step, scene }) {
+    return buildCity({ quality, step, scene });
   },
 };
