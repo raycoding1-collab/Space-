@@ -7,6 +7,10 @@ import { buildDistricts } from './districts.js';
 import { buildSpire } from './spire.js';
 import { buildDomes } from './domes.js';
 import { buildCanal } from './canal.js';
+import { buildIndustry } from './industry.js';
+import { buildHarbours } from './harbours.js';
+import { buildUndercity } from './undercity.js';
+import { buildStern } from './stern.js';
 import { GRID, POLAR, SPIRE } from './layout.js';
 import { lightUniforms } from '../ship/lights.js';
 import { conduitTime } from '../ship/conduit.js';
@@ -53,6 +57,14 @@ export async function buildCity({ quality, step, scene }) {
   root.add(buildDomes(M, ctx, scene.background));
   await step('Flooding the Grand Canal', 0.74);
   root.add(buildCanal(M, ctx, scene.background));
+  await step('Firing the smelters', 0.77);
+  root.add(buildIndustry(M, ctx));
+  await step('Mooring the harbours', 0.8);
+  root.add(buildHarbours(M, ctx));
+  await step('Lighting the reactor suns', 0.84);
+  root.add(buildUndercity(M, ctx));
+  await step('Warming the drives', 0.88);
+  root.add(buildStern(M, ctx));
 
   ctx.animated.push((t) => { M.U.uCityTime.value = t; conduitTime.value = t; lightUniforms.uTime.value = t; });
   return {

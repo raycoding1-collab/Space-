@@ -58,6 +58,15 @@ void main() {
   ${LOGDEPTH_FRAG}
 }`;
 
+/** Glowing crystal: inner light rising through faceted glass (crown shards, bow beacon). */
+export function crystalMat(base = 1.6) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uCityTime: CITY_U.uCityTime, uSunDirC: CITY_U.uSunDirC, uBase: { value: base },
+      uHazeC: CITY_U.uHazeC, uHazeR: CITY_U.uHazeR, uHazeK: CITY_U.uHazeK, uHazeFloor: CITY_U.uHazeFloor, uHazeCol: CITY_U.uHazeCol },
+    vertexShader: CRYSTAL_VERT, fragmentShader: CRYSTAL_FRAG,
+  });
+}
+
 export function buildSpire(M, ctx) {
   const root = new THREE.Group();
   root.name = 'crown-spire';

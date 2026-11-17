@@ -116,6 +116,19 @@ export function createCityMaterials() {
     wallC: { pat: 0, floorH: 4.2, bay: 3.2, colEvery: 6, mech: 20, litP: 0.4, warm: 0.6, segment: 260, frame: C(0.55, 0.55, 0.56), glass: C(0.06, 0.08, 0.1), ao: 0 },
     spireTower: { pat: 0, floorH: 5.0, bay: 3.6, colEvery: 6, mech: 24, litP: 0.46, warm: 0.62, frame: C(0.86, 0.79, 0.64), glass: C(0.11, 0.1, 0.09), accent: C(0.96, 0.76, 0.44), trim: C(1.0, 0.8, 0.52), roof: C(0.5, 0.46, 0.4), lobby: 0, ao: 0 },
     haloMat: { pat: 5, floorH: 4.0, bay: 3.4, colEvery: 0, mech: 0, litP: 0.55, warm: 0.7, panel: C(0.9, 0.89, 0.86), frame: C(0.9, 0.88, 0.84), glass: C(0.08, 0.09, 0.1), accent: C(0.95, 0.76, 0.46), trim: C(1.0, 0.86, 0.62), ao: 0 },
+    smelter: { pat: 2, floorH: 7.0, bay: 6.0, colEvery: 0, mech: 0, litP: 0.35, warm: 1.0, panel: C(0.3, 0.29, 0.28), glass: C(0.05, 0.04, 0.04), roof: C(0.22, 0.21, 0.2), trim: C(1.0, 0.42, 0.1), trimI: 4.0, ao: 0 },
+    cranes: { pat: 2, floorH: 4.0, bay: 3.0, colEvery: 0, mech: 0, litP: 0.4, warm: 0.8, panel: C(0.85, 0.84, 0.8), accent: C(0.95, 0.56, 0.16), glass: C(0.1, 0.12, 0.14), roof: C(0.8, 0.8, 0.78), ao: 0 },
+    shipWhite: { pat: 1, floorH: 4.0, bay: 3.0, colEvery: 0, mech: 0, litP: 0.5, warm: 0.6, panel: C(0.86, 0.86, 0.84), frame: C(0.8, 0.8, 0.8), glass: C(0.06, 0.08, 0.1), accent: C(0.8, 0.62, 0.36), roof: C(0.7, 0.7, 0.68), trim: C(0.55, 0.8, 1.0), ao: 0 },
+    shipGrey: { pat: 2, floorH: 4.0, bay: 4.0, colEvery: 0, mech: 0, litP: 0.35, warm: 0.5, panel: C(0.46, 0.47, 0.48), accent: C(0.6, 0.62, 0.64), glass: C(0.05, 0.06, 0.07), roof: C(0.4, 0.41, 0.42), trim: C(0.55, 0.8, 1.0), ao: 0 },
+    shipDark: { pat: 0, floorH: 4.0, bay: 3.4, colEvery: 0, mech: 0, litP: 0.3, warm: 0.4, frame: C(0.14, 0.15, 0.16), panel: C(0.18, 0.19, 0.2), accent: C(0.82, 0.5, 0.18), glass: C(0.04, 0.05, 0.06), roof: C(0.2, 0.2, 0.21), trim: C(1.0, 0.6, 0.3), ao: 0 },
+    shipBlue: { pat: 1, floorH: 4.0, bay: 3.0, colEvery: 0, mech: 0, litP: 0.4, warm: 0.5, panel: C(0.22, 0.3, 0.42), accent: C(0.82, 0.82, 0.8), glass: C(0.05, 0.06, 0.08), roof: C(0.3, 0.34, 0.4), trim: C(0.55, 0.8, 1.0), ao: 0 },
+    pierMat: { pat: 1, floorH: 5.0, bay: 4.0, colEvery: 0, mech: 0, litP: 0.55, warm: 0.6, panel: C(0.62, 0.62, 0.6), glass: C(0.06, 0.07, 0.08), accent: C(0.7, 0.72, 0.74), roof: C(0.36, 0.36, 0.35), ao: 0 },
+    underDark: { pat: 0, floorH: 4.0, bay: 3.2, colEvery: 4, mech: 14, litP: 0.62, warm: 0.75, frame: C(0.16, 0.15, 0.14), glass: C(0.05, 0.05, 0.05), accent: C(0.7, 0.48, 0.26), roof: C(0.18, 0.17, 0.16), trim: C(1.0, 0.62, 0.3), ao: 0 },
+    underBronze: { pat: 7, floorH: 3.8, bay: 3.0, colEvery: 0, mech: 12, litP: 0.6, warm: 0.85, frame: C(0.36, 0.26, 0.17), glass: C(0.06, 0.05, 0.04), accent: C(0.5, 0.35, 0.22), roof: C(0.25, 0.2, 0.16), trim: C(1.0, 0.55, 0.25), ao: 0 },
+    underGlass: { pat: 6, floorH: 4.0, bay: 3.0, colEvery: 0, mech: 0, litP: 0.55, warm: 0.55, frame: C(0.3, 0.3, 0.32), glass: C(0.05, 0.06, 0.08), accent: C(0.55, 0.75, 0.85), roof: C(0.2, 0.2, 0.22), trim: C(0.45, 0.85, 1.0), ao: 0 },
+    lantern: { pat: 5, floorH: 4.2, bay: 3.4, colEvery: 0, mech: 0, litP: 0.7, warm: 0.8, panel: C(0.9, 0.88, 0.84), frame: C(0.9, 0.88, 0.84), glass: C(0.08, 0.08, 0.09), accent: C(0.95, 0.76, 0.46), trim: C(1.0, 0.82, 0.55), ao: 0 },
+    engineHousing: { pat: 2, floorH: 6.0, bay: 6.0, colEvery: 0, mech: 0, litP: 0.2, warm: 0.4, panel: C(0.22, 0.22, 0.23), accent: C(0.36, 0.37, 0.39), glass: C(0.04, 0.04, 0.05), roof: C(0.2, 0.2, 0.21), trim: C(0.45, 0.8, 1.0), trimI: 3.0, ao: 0 },
+    vaneMat: { pat: 2, floorH: 6.0, bay: 6.0, colEvery: 0, mech: 0, litP: 0.1, warm: 0.4, panel: C(0.2, 0.18, 0.16), accent: C(0.42, 0.32, 0.22), glass: C(0.04, 0.04, 0.05), roof: C(0.2, 0.2, 0.21), trim: C(0.6, 0.88, 1.0), trimI: 3.4, ao: 0 },
     canalHouses: { pat: 2, floorH: 3.6, bay: 3.2, colEvery: 0, mech: 0, litP: 0.6, warm: 0.9, segment: 42, panel: C(0.8, 0.7, 0.56), glass: C(0.05, 0.05, 0.06), ao: 0 },
     terrace: { pat: 5, floorH: 4.0, bay: 3.8, colEvery: 0, mech: 15, litP: 0.48, warm: 0.7, segment: 160, panel: C(0.84, 0.82, 0.78), glass: C(0.06, 0.07, 0.09), ao: 0 },
   };
@@ -160,6 +173,7 @@ export function createCityMaterials() {
   M.glowWhite = glow(1.0, 0.96, 0.9, 5.0);
   M.glowRed = glow(1.0, 0.18, 0.08, 4.0);
   M.glowEmber = glow(1.0, 0.42, 0.12, 3.0);
+  M.glowThroat = glow(0.75, 0.88, 1.0, 3.2);
   M.steelPlain = hazed(new THREE.MeshStandardMaterial({ color: C(0.55, 0.56, 0.58), metalness: 0.8, roughness: 0.4 }));
   M.darkPlain = hazed(new THREE.MeshStandardMaterial({ color: C(0.12, 0.12, 0.13), metalness: 0.7, roughness: 0.5 }));
   M.whitePlain = hazed(new THREE.MeshStandardMaterial({ color: C(0.8, 0.8, 0.78), metalness: 0.3, roughness: 0.5 }));
