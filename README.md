@@ -137,7 +137,8 @@ Close-ups at 3840 × 2160 (in `screenshots/city/closeups/`):
 | ![](screenshots/city/closeups/c05-supertall-facade.jpg) | ![](screenshots/city/closeups/c06-rooftops.jpg) |
 | ![](screenshots/city/closeups/c07-holographic-rings.jpg) | ![](screenshots/city/closeups/c08-harbour-pier.jpg) |
 | ![](screenshots/city/closeups/c09-construction-cranes.jpg) | ![](screenshots/city/closeups/c10-undercity-close.jpg) |
-| ![](screenshots/city/closeups/c11-lake-dome-sailboats.jpg) | |
+| ![](screenshots/city/closeups/c11-lake-dome-sailboats.jpg) | ![](screenshots/city/closeups/c12-window-rooms.jpg) |
+| ![](screenshots/city/closeups/c13-deco-skyline.jpg) | |
 
 ### The city
 
@@ -154,9 +155,16 @@ Close-ups at 3840 × 2160 (in `screenshots/city/closeups/`):
   streets. Supertall towers reach 1.4 km on the upper terraces.
 - **Districts**: over 14,000 buildings from 21 designed archetypes (blade, twin towers, ziggurat,
   twisted, needle, crowned cylinder, trifoil, gate, crystal, stacked, courtyard blocks, terraced
-  residences, villas and more) in 51 facade styles. Each district has its own architectural language:
+  residences, villas and more) in over 50 facade styles. Each district has its own architectural language:
   the Meridian commercial core, the canal quarter's warm terraced residences, and garden quarters of
   low courtyard houses and parks.
+- **The Elysian vernacular**: signatures that recur across every district and make the city one place.
+  Towers step back in art-deco setbacks with garden ledges and are crowned by glowing **lanterns** under
+  gilded cupolas. **Gilded ribs** climb the corners and rise past the roofline into lit finials.
+  Residences wear verdigris, slate or old-bronze **copper mansards** with rows of lit dormers. Recessed
+  **sky-garden storeys** cut through the towers. Two facade orders of the city's own appear everywhere:
+  the *arcade* (round-headed windows with gilded architraves and keystones) and the *deco* (gilded
+  piers with chevron spandrels).
 - **Biome domes**: the *Lake Dome* (a lake with wooded islands, cliffs and a waterfall under a
   hex-geodesic frame), the *Forest Dome* (over 20,000 trees climbing a central peak under meridian ribs)
   and the *Orchard Dome* (twelve concentric crop terraces under a gilded diagrid).
@@ -174,7 +182,9 @@ Close-ups at 3840 × 2160 (in `screenshots/city/closeups/`):
 - **Engine wall**: seven colossal drives and twenty-four auxiliaries, with plumes 11 km long. Lift vanes
   with glowing leading edges sweep out from the flanks.
 - **Prow**: the Lantern observatory and a 1.4 km crystal beacon pointing forward.
-- **Up close**: ground traffic on every street (animated on the GPU, with head- and tail-lights),
+- **Up close**: every window is a room, with mullions and a transom, blinds pulled to different
+  heights, a bright ceiling line, furniture and plants silhouetted against the light, and the odd
+  television glowing in a dark flat. Ground traffic runs on every street (animated on the GPU, with head- and tail-lights),
   tree-lined boulevards with lamp posts, neon banners and holographic billboards, a holographic ring
   display over the Cascade, rooftop helipads with parked aircars, glass sky bridges between the spire
   towers, a colonnaded plaza with reflecting pools at the foot of the spire, tree-lined terrace
