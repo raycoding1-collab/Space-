@@ -12,7 +12,9 @@ import { buildHarbours } from './harbours.js';
 import { buildUndercity } from './undercity.js';
 import { buildStern } from './stern.js';
 import { buildLife } from './life.js';
-import { GRID, POLAR, SPIRE } from './layout.js';
+import { InstanceCuller } from './culling.js';
+import { buildExtras } from './extras.js';
+import { GRID, POLAR, SPIRE, CITY_DETAIL } from './layout.js';
 import { lightUniforms } from '../ship/lights.js';
 import { conduitTime } from '../ship/conduit.js';
 
@@ -45,6 +47,7 @@ export async function buildCity({ quality, step, scene }) {
   const root = new THREE.Group();
   root.name = 'ELYSION';
   const ctx = { animated: [], frame: [] };
+  CITY_DETAIL.k = quality.detail ?? 1;
   await step('Casting the keel-leaf', 0.3);
   const M = createCityMaterials();
   const blocks = emptyBlocks();
@@ -69,6 +72,16 @@ export async function buildCity({ quality, step, scene }) {
   await step('Waking the city', 0.92);
   root.add(buildLife(M, ctx, { envTex: scene.background, quality, lib: ctx.lib }));
 
+  await step('Adding the fine detail', 0.95);
+  root.add(buildExtras(M, ctx, ctx.lib));
+  // per-frame culling of every static instance (buildings, trees, ships, frames…)
+  {
+    const culler = new InstanceCuller();
+    culler.registerTree(root, [ctx.halo, ctx.vespera].filter(Boolean));
+    ctx.culler = culler;
+    ctx.frame.push((camera) => culler.update(camera, lightUniforms.uViewH.value));
+    console.log(`[city] culler: ${culler.sets.length} meshes, ${culler.stats.total} instances`);
+  }
   {
     const count = (name) => { let n = 0; root.traverse((o) => { if (o.name === name) n += o.isInstancedMesh ? o.count : 1; }); return n; };
     console.log(`[city] stats ${JSON.stringify({ bridges: (ctx.bridges || []).length, cranes: (ctx.cranes || []).length, piers: (ctx.piers || []).length,

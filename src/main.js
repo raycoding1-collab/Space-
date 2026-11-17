@@ -11,7 +11,9 @@ import { CameraRig, Tour } from './ui/controls.js';
 import { HUD } from './ui/hud.js';
 
 const params = new URLSearchParams(location.search);
-const SHIP_ID = params.get('ship') === 'city' ? 'city' : 'vespera';
+// A site page can preset the ship and its behaviour (see elysion/index.html)
+const SITE = window.SITE || {};
+const SHIP_ID = (params.get('ship') || SITE.ship) === 'city' ? 'city' : 'vespera';
 const { PROFILE } = SHIP_ID === 'city' ? await import('./city/profile.js') : await import('./ship/profile.js');
 const POIS = PROFILE.pois, TOUR = PROFILE.tour, LABELS = PROFILE.labels;
 // per-ship art direction of the world (e.g. a lower sun over the city)
@@ -36,13 +38,24 @@ document.title = PROFILE.docTitle;
 }
 const DPR = window.devicePixelRatio || 1;
 
+// Phones and tablets: tile-based GPUs, small screens, limited memory
+const IS_MOBILE = (() => {
+  const ua = navigator.userAgent || '';
+  if (navigator.userAgentData?.mobile) return true;
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+  return navigator.maxTouchPoints > 1 && /Macintosh/.test(ua) && Math.min(screen.width, screen.height) < 1100; // iPadOS
+})();
+document.body.classList.toggle('is-mobile', IS_MOBILE);
+
 const PRESETS = {
+  mobile: { label: 'Mobile', pr: Math.min(DPR, 1.5), sky: 1024, texSize: 1024, shadow: 2048, samples: 2, aniso: 4, planetTex: 2048, detail: 0.5, minScale: 0.55, targetFps: 32 },
   test: { label: 'Test', pr: 1, sky: 1024, texSize: 1024, shadow: 4096, samples: 4, aniso: 4, planetTex: 2048 },
   low: { label: 'Low', pr: Math.min(DPR, 1), sky: 1024, texSize: 1024, shadow: 2048, samples: 2, aniso: 4, planetTex: 2048 },
   high: { label: 'High', pr: Math.min(DPR, 1.5), sky: 2048, texSize: 2048, shadow: 4096, samples: 4, aniso: 8, planetTex: 4096 },
   ultra: { label: 'Ultra', pr: Math.min(Math.max(DPR, 1.5), 2), sky: 2048, texSize: 2048, shadow: 8192, samples: 4, aniso: 16, planetTex: 4096 },
 };
-const quality = { ...(PRESETS[params.get('q')] || PRESETS.high) };
+const qName = params.get('q') || (IS_MOBILE ? 'mobile' : 'high');
+const quality = { detail: 1, minScale: 0.6, targetFps: 55, ...(PRESETS[qName] || PRESETS.high) };
 const SCALE_STEPS = [0.6, 0.8, 1.0, 1.25, 1.5, 2.0];
 
 const STILL = params.has('still');
@@ -190,6 +203,7 @@ async function init() {
   function cycleQuality() {
     scaleIdx = (scaleIdx + 1) % SCALE_STEPS.length;
     applySize(undefined, undefined, SCALE_STEPS[scaleIdx]);
+    dynScale = SCALE_STEPS[scaleIdx];
     hud.setQualityLabel(`${SCALE_STEPS[scaleIdx]}×`);
     hud.toast(`Render scale ${SCALE_STEPS[scaleIdx]}× · ${renderer.domElement.width}×${renderer.domElement.height}`);
     autoScale = false;
@@ -203,12 +217,21 @@ async function init() {
   const timeScale = 1;
 
   let shadowOverride = null;
+  // Adaptive shadows: re-render the shadow map when its frame changes, otherwise every third frame
+  // (for moving traffic). Stills always get a fresh map.
+  let shadowFrame = 0;
+  if (sun.adaptive) renderer.shadowMap.autoUpdate = false;
   function fitShadow() {
     if (!sun.adaptive) return;
-    if (shadowOverride) { sun.fit(shadowOverride.center, shadowOverride.radius); return; }
-    const f = rig.focus;
-    const d = camera.position.distanceTo(f);
-    sun.fit(f, d * (PROFILE.shadow.radiusK || 1.2));
+    let changed;
+    if (shadowOverride) changed = sun.fit(shadowOverride.center, shadowOverride.radius);
+    else {
+      const f = rig.focus;
+      const d = camera.position.distanceTo(f);
+      changed = sun.fit(f, d * (PROFILE.shadow.radiusK || 1.2));
+    }
+    shadowFrame++;
+    if (changed || STILL || shadowFrame % 3 === 0) renderer.shadowMap.needsUpdate = true;
   }
 
   function tick(dt) {
@@ -237,6 +260,7 @@ async function init() {
     const prevW = window.innerWidth, prevH = window.innerHeight;
     applySize(w, h, 1);
     tick(0);
+    if (sun.adaptive) renderer.shadowMap.needsUpdate = true;
     render();
     const url = renderer.domElement.toDataURL('image/png');
     applySize(prevW, prevH, prevPR);
@@ -292,6 +316,13 @@ async function init() {
   };
   window.VESPERA = api;
 
+  // compile every shader program now, so no view hitches the first time it comes into sight
+  await step('Compiling shaders', 0.97);
+  const tc = performance.now();
+  try {
+    if (!STILL) renderer.compile(scene, camera);
+  } catch (e) { console.warn('precompile failed', e); }
+  console.log(`[boot] shaders compiled in ${((performance.now() - tc) / 1000).toFixed(1)} s`);
   await step('All systems nominal', 1.0);
   const loader = document.getElementById('loader');
 
@@ -325,9 +356,11 @@ async function init() {
     api.setView(params.get('view'));
   }
 
-  // adaptive resolution
-  let autoScale = !params.has('q');
-  let acc = 0, frames = 0, checks = 0;
+  // adaptive resolution: hold the frame rate by easing the render scale down (and back up when there
+  // is headroom), never above the preset's own scale, so a fast GPU keeps the full resolution
+  let autoScale = !params.has('q') || qName === 'mobile';
+  let acc = 0, frames = 0;
+  let dynScale = renderer.getPixelRatio();
   let last = performance.now();
   function loop() {
     requestAnimationFrame(loop);
@@ -354,17 +387,16 @@ async function init() {
     if ((frames & 7) === 0) {
       hud.telemetry({ simTime, range: camera.position.distanceTo(PROFILE.rangeOrigin || ORIGIN) });
     }
-    // adaptive resolution: step down if we are well below 30 fps
     acc += dt; frames++;
-    if (autoScale && acc > 2.5) {
+    if (autoScale && acc > 2.0) {
       const fps = frames / acc;
-      if (fps < 26 && scaleIdx > 0 && checks < 4) {
-        scaleIdx--;
-        applySize(undefined, undefined, SCALE_STEPS[scaleIdx]);
-        hud.setQualityLabel(`${SCALE_STEPS[scaleIdx]}×`);
-        checks++;
-      } else if (fps > 50) {
-        autoScale = checks > 0 ? false : autoScale;
+      let next = dynScale;
+      if (fps < quality.targetFps * 0.82) next = Math.max(quality.minScale, dynScale * (fps < quality.targetFps * 0.55 ? 0.8 : 0.9));
+      else if (fps > quality.targetFps * 1.12) next = Math.min(quality.pr, dynScale * 1.08);
+      if (Math.abs(next - dynScale) / dynScale > 0.04) {
+        dynScale = next;
+        applySize(undefined, undefined, dynScale);
+        hud.setQualityLabel(`${dynScale.toFixed(2)}×`);
       }
       acc = 0; frames = 0;
     }

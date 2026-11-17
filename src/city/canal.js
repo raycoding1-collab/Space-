@@ -269,6 +269,8 @@ export function buildCanal(M, ctx, envTex) {
       bl.add(new THREE.Vector3(), NAV.warm, { intensity: 5, size: 3 });
       bl.add(new THREE.Vector3(), new THREE.Color(1.0, 0.6, 0.3), { intensity: 3, size: 2 });
     }
+    boats.userData.dynamic = true;
+    boats.frustumCulled = false;
     root.add(boats);
     const pts = bl.build(root, { name: 'boat-lights' });
     pts.frustumCulled = false;

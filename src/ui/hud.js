@@ -41,6 +41,10 @@ export class HUD {
     });
     this.setLabels(false);
     this._v = new THREE.Vector3();
+    // on small screens the info card is a pull-up sheet: tap to open or close it
+    this.el.info.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 900px), (pointer: coarse) and (max-width: 1180px)').matches) this.el.info.classList.toggle('open');
+    });
   }
 
   show() { this.el.hud.classList.remove('hidden'); }
@@ -56,6 +60,7 @@ export class HUD {
   setMode(mode) {
     document.querySelectorAll('.mode').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
     document.body.classList.toggle('mode-fly', mode === 'fly');
+    document.body.classList.toggle('mode-tour', mode === 'tour');
     const hints = {
       orbit: 'Drag to orbit · Right-drag to pan · Scroll to zoom toward the cursor · <kbd>L</kbd> labels · <kbd>H</kbd> hide UI',
       fly: 'Click to capture mouse · <kbd>W A S D</kbd> move · <kbd>R</kbd>/<kbd>F</kbd> up/down · <kbd>Q</kbd>/<kbd>E</kbd> roll · <kbd>Shift</kbd> boost · scroll = speed',
@@ -66,6 +71,8 @@ export class HUD {
   }
   setActivePoi(id) {
     this.el.list.querySelectorAll('.poi').forEach((b) => b.classList.toggle('active', b.dataset.id === id));
+    const btn = this.el.list.querySelector(`.poi[data-id="${id}"]`);
+    if (btn && this.el.list.scrollWidth > this.el.list.clientWidth) btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     const p = this.pois.find((x) => x.id === id);
     if (!p) return;
     this.el.kicker.textContent = p.kicker;

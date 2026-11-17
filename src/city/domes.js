@@ -3,7 +3,7 @@
 //   Forest Dome  — a dense forest climbing a central peak, under meridian ribs and latitude rings
 //   Orchard Dome — concentric stepped crop terraces and orchards, under a diagrid lamella frame
 import * as THREE from 'three';
-import { DOMES, DOME_RING } from './layout.js';
+import { DOMES, DOME_RING, CITY_DETAIL } from './layout.js';
 import { Shape, ShapeBatch, Z, circle, rect } from './geo.js';
 import { beamMatrix } from '../lib/geo.js';
 import { RNG, TAU, smoothstep as sm, clamp } from '../lib/rng.js';
@@ -308,7 +308,7 @@ export function buildDomes(M, ctx, envTex) {
       g.add(wmesh);
       // trees on islands and the shore
       const trees = [];
-      for (let k = 0; k < 22000; k++) {
+      for (let k = 0; k < 22000 * CITY_DETAIL.k; k++) {
         const r = Math.sqrt(rng.next()) * R * 0.95, th = rng.range(0, TAU);
         const h = hFn(r, th);
         if (h < water + 4) continue;
@@ -369,7 +369,7 @@ export function buildDomes(M, ctx, envTex) {
       tm.position.y = rp + 10; tm.receiveShadow = true; tm.castShadow = true;
       g.add(tm);
       const trees = [];
-      for (let k = 0; k < 22000; k++) {
+      for (let k = 0; k < 22000 * CITY_DETAIL.k; k++) {
         const r = Math.sqrt(rng.next()) * R * 0.97, th = rng.range(0, TAU);
         const h = hFn(r, th);
         if (h > 470 && rng.chance(0.85)) continue; // bare summit
@@ -443,5 +443,6 @@ function buildConifers(parent, trees, M) {
   mesh.castShadow = true; mesh.receiveShadow = true;
   mesh.computeBoundingSphere();
   mesh.name = 'conifers';
+  mesh.userData.minPx = 1.2;
   parent.add(mesh);
 }

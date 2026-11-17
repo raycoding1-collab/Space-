@@ -26,6 +26,24 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000> for VESPERA, or <http://localhost:8000/?ship=city> for ELYSION.
 
+### The ELYSION website
+
+`elysion/` is ELYSION's own site, served from the same folder: <http://localhost:8000/elysion/>. It has its
+own name, icons and social preview, can be added to a phone's home screen, and is built for both phones
+and computers:
+
+- **Phones and tablets** get a touch layout (one finger to orbit, pinch to zoom, two fingers to pan), a
+  swipeable bar of places, an info card that pulls up from the bottom, and room for notches and home
+  indicators. The city is built at lighter density there (fewer trees, vehicles and signs; every landmark
+  stays).
+- **Every device** gets a render scale that follows the frame rate: it eases down when the GPU can't keep
+  up and climbs back to full resolution when it can.
+- **Smooth view changes**: every shader is compiled while the loader is showing, only the instances that
+  can be seen (or whose shadows can be seen) are drawn each frame, and the shadow map is re-rendered only
+  when its frame changes.
+
+Any static host works (GitHub Pages, Netlify, an S3 bucket); upload the repository as it is.
+
 > Opening `index.html` straight from disk (`file://`) won't work, because browsers block ES modules there.
 
 ### Quality
@@ -143,6 +161,11 @@ foundation, with 4.2 million people aboard. VESPERA flies escort to starboard, a
 - **Engine wall**: seven colossal drives and twenty-four auxiliaries, with plumes 11 km long. Lift vanes
   with glowing leading edges sweep out from the flanks.
 - **Prow**: the Lantern observatory and a 1.4 km crystal beacon pointing forward.
+- **Up close**: ground traffic on every street (animated on the GPU, with head- and tail-lights),
+  tree-lined boulevards with lamp posts, neon banners and holographic billboards, a holographic ring
+  display over the Cascade, rooftop helipads with parked aircars, glass sky bridges between the spire
+  towers, a colonnaded plaza with reflecting pools at the foot of the spire, tree-lined terrace
+  promenades and sailboats on the Lake Dome.
 - **Alive**: an elevated maglev network of glass tubes links the spire, the domes, the canal and the
   harbours, with pods running. Streams of air traffic fly over the rooftops and around the spire.
   Ferries shuttle between the harbours and VESPERA's hangar bays and head out to the moon Ilex, while

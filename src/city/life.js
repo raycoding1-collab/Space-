@@ -15,7 +15,7 @@ import { WORLD } from '../world.js';
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1);
 const _t = new THREE.Vector3(), _z = new THREE.Vector3(0, 0, 1);
 
-function aircar() {
+export function aircar() {
   const s = new Shape();
   const sec = (z, w, h, y = 0) => [[-w / 2, y, z], [w / 2, y, z], [w * 0.35, y + h, z], [-w * 0.35, y + h, z]];
   s.loft([sec(-6, 0.5, 0.5, 0.6), sec(-4, 4.4, 2.2), sec(3, 4.0, 2.6), sec(6.5, 1.2, 0.8, 0.7)], Z.METAL, { closed: true, crease: 40 });
@@ -49,12 +49,13 @@ function ferry() {
 }
 
 /** Instanced movers along curves: matrices and paired light sprites updated every frame. */
-class Movers {
+export class Movers {
   constructor(parent, geo, mat, style, list, lightDefs, name) {
     this.list = list;
     if (style !== null) geo.setAttribute('aStyle', new THREE.InstancedBufferAttribute(new Float32Array(list.length).fill(style), 1));
     this.mesh = new THREE.InstancedMesh(geo, mat, list.length);
     this.mesh.frustumCulled = false;
+    this.mesh.userData.dynamic = true;
     this.mesh.castShadow = false;
     this.mesh.name = name;
     parent.add(this.mesh);

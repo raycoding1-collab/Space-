@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { RNG, TAU, clamp, smoothstep as sm } from '../lib/rng.js';
 import {
   D, districtAt, halfWidth, blockRect, GRID, PLATEAUS, plateauLevel, polarOf, polarSpokes, POLAR, SPIRE,
-  CANAL, DOMES, DOME_RING, CONSTRUCTION, transitDist,
+  CANAL, DOMES, DOME_RING, CONSTRUCTION, transitDist, CITY_DETAIL,
 } from './layout.js';
 import * as A from './archetypes.js';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -45,7 +45,7 @@ const PALETTE = {
 
 /** Geometry/material library with height buckets so a few hundred variants cover the whole city. */
 class Library {
-  constructor(M) { this.M = M; this.geos = new Map(); this.inst = new Map(); this.tris = 0; this.tops = []; }
+  constructor(M) { this.M = M; this.geos = new Map(); this.inst = new Map(); this.tris = 0; this.tops = []; this.placed = []; }
   variant(name, H, seedIdx) {
     const f = H > 250 ? 1.2 : 1.32;
     const b = Math.round(Math.log(H) / Math.log(f));
@@ -66,6 +66,10 @@ class Library {
     const sy = m4.elements[5] !== undefined ? Math.hypot(m4.elements[4], m4.elements[5], m4.elements[6]) : 1;
     const top = v.h * sy;
     if (top > 480 && m4.elements[5] > 0) this.tops.push([m4.elements[12], m4.elements[13] + top * 1.04, m4.elements[14]]);
+    if (m4.elements[5] > 0) {
+      const e = m4.elements, sc = Math.hypot(e[0], e[1], e[2]);
+      this.placed.push({ arch: v.key.split('|')[0], x: e[12], y: e[13], z: e[14], rot: Math.atan2(-e[2], e[0]), s: sc, top, w: v.w * sc, d: v.d * sc, style: styleName });
+    }
     let e = this.inst.get(v.key);
     if (!e) { e = { geo: v.geo, list: [], styles: [] }; this.inst.set(v.key, e); }
     e.list.push(m4.clone());
@@ -83,6 +87,7 @@ class Library {
       mesh.receiveShadow = true;
       mesh.computeBoundingSphere();
       mesh.matrixAutoUpdate = false;
+      mesh.userData.minPx = 0.6;
       parent.add(mesh);
       n += e.list.length;
     }
@@ -291,7 +296,7 @@ function plazaFeature(B, lib, rng, dc) {
 }
 
 function parkTrees(B, rng, trees) {
-  const step = 21;
+  const step = 21 / Math.sqrt(CITY_DETAIL.k);
   for (let x = B.x0 + 8; x < B.x1 - 8; x += step) {
     for (let z = B.z0 + 8; z < B.z1 - 8; z += step) {
       if (rng.chance(0.38)) continue;
@@ -336,6 +341,7 @@ export function buildTrees(parent, trees, M, name = 'trees', { fine = false } = 
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   mesh.name = name;
+  mesh.userData.minPx = 1.2;
   mesh.computeBoundingSphere();
   parent.add(mesh);
   return mesh;

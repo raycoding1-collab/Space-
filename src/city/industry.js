@@ -296,6 +296,7 @@ function buildConstruction(M, ctx, root, B, lights, rng) {
   const topMesh = new THREE.InstancedMesh(top.toGeometry(), M.cranes, cranes.length);
   cranes.forEach((c, i) => mastMesh.setMatrixAt(i, instMatrix(c.x, c.y, c.z, 0, 1, c.mast)));
   mastMesh.castShadow = true; topMesh.castShadow = true;
+  topMesh.userData.dynamic = true; topMesh.frustumCulled = false;
   root.add(mastMesh, topMesh);
   const cl = new LightSet();
   cranes.forEach(() => cl.add(new THREE.Vector3(), NAV.red, { intensity: 10, size: 3, period: 1.4, duty: 0.5 }));

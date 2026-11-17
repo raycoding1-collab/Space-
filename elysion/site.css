@@ -1,0 +1,98 @@
+/* ELYSION — site layer on top of the shared app styles: its own identity, safe areas for notched
+   phones, and a touch-first layout for small screens (swipeable places bar, pull-up info sheet). */
+
+:root { --accent: #8fd8ff; --accent-warm: #ffd08a; }
+html, body { overscroll-behavior: none; }
+#viewport { touch-action: none; }
+
+.loader { background: radial-gradient(ellipse at 50% 62%, #12111f 0%, #04050c 62%, #010103 100%); }
+.loader-mark .spire { fill: var(--accent-warm); opacity: .85; }
+.loader-mark .halo { fill: none; stroke: var(--accent); stroke-width: 1.2; opacity: .8; }
+.loader-note { margin-top: 18px; font-size: 12px; line-height: 1.6; color: var(--accent-warm); }
+
+.intro-hint { margin: 18px 0 0; font-size: 10.5px; letter-spacing: .14em; color: var(--ink-faint); }
+.intro-hint kbd { font: 10px var(--mono); padding: 1px 5px; border: 1px solid var(--ink-faint); border-radius: 2px; }
+.only-touch { display: none; }
+body.is-mobile .only-touch { display: inline; }
+body.is-mobile .only-desktop { display: none; }
+
+/* this is ELYSION's own site: no ship switcher */
+.ship-switch { display: none; }
+.sheet-handle { display: none; }
+
+/* notches and home indicators */
+.hud-brand { top: calc(28px + env(safe-area-inset-top)); left: calc(32px + env(safe-area-inset-left)); }
+.info-card { right: calc(32px + env(safe-area-inset-right)); }
+.hud-bottom { bottom: calc(26px + env(safe-area-inset-bottom)); left: calc(32px + env(safe-area-inset-left)); right: calc(32px + env(safe-area-inset-right)); }
+
+/* ---------------------------------------------------------------- phones and small tablets */
+@media (max-width: 900px), (pointer: coarse) and (max-width: 1180px) {
+  .hud-brand { top: calc(14px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); }
+  .brand-name { font-size: 13px; letter-spacing: .5em; }
+  .brand-sub { font-size: 8.5px; letter-spacing: .24em; }
+
+  .telemetry {
+    display: flex; top: calc(14px + env(safe-area-inset-top)); left: auto; right: calc(14px + env(safe-area-inset-right));
+    transform: none; gap: 14px;
+  }
+  .telemetry .t-row:nth-child(n + 3) { display: none; }
+  .t-row span { font-size: 8px; }
+  .t-row b { font-size: 11px; }
+
+  /* places: a swipeable bar of chips above the controls */
+  .poi-list {
+    position: absolute; top: auto; left: 0; right: 0; transform: none;
+    bottom: calc(70px + env(safe-area-inset-bottom));
+    flex-direction: row; gap: 8px; padding: 6px max(14px, env(safe-area-inset-left)); overflow-x: auto;
+    scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .poi-list::-webkit-scrollbar { display: none; }
+  .poi-list::before { display: none; }
+  .poi {
+    flex: 0 0 auto; padding: 10px 15px; border: 1px solid var(--glass-edge); background: var(--glass);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 999px;
+    font-size: 10px; letter-spacing: .16em; color: var(--ink-dim); scroll-snap-align: start;
+  }
+  .poi .tick { display: none; }
+  .poi.active { color: #fff; border-color: rgba(143, 216, 255, .65); background: rgba(40, 70, 110, .45); }
+
+  /* the info card becomes a pull-up sheet: title only until it is tapped */
+  .info-card {
+    display: block; top: auto; left: 10px; right: 10px; width: auto;
+    bottom: calc(124px + env(safe-area-inset-bottom)); padding: 14px 16px 12px;
+    max-height: 48vh; overflow: auto; border-radius: 14px; cursor: pointer;
+  }
+  .info-card h2 { font-size: 16px; margin: 4px 0 0; }
+  .info-card p, .info-card .info-stats { display: none; }
+  .info-card.open p { display: block; margin-top: 10px; }
+  .info-card.open .info-stats { display: grid; }
+  .sheet-handle {
+    display: block; position: absolute; left: 50%; top: 6px; width: 36px; height: 4px; margin-left: -18px;
+    border: 0; padding: 0; border-radius: 4px; background: rgba(255, 255, 255, .28); cursor: pointer;
+  }
+  body.mode-tour .info-card, body.mode-fly .info-card { display: none; }
+
+  .hud-bottom { left: 10px; right: 10px; bottom: calc(12px + env(safe-area-inset-bottom)); gap: 8px; }
+  .modes .mode { padding: 12px 15px; }
+  .hint { display: none; }
+  .tools .tool:not(#btn-hide):not(#btn-labels) { display: none; }
+  .tool { padding: 12px 12px; }
+
+  .caption { bottom: calc(190px + env(safe-area-inset-bottom)); font-size: 13px; padding: 0 18px; max-width: 94vw; }
+  .intro { left: 20px; right: 20px; bottom: calc(36px + env(safe-area-inset-bottom)); max-width: none; }
+  .intro::before { background: linear-gradient(0deg, rgba(2, 3, 8, 0.9) 0%, rgba(2, 3, 8, 0.72) 42%, rgba(2, 3, 8, 0.25) 66%, transparent 80%); }
+  .intro-title { font-size: clamp(38px, 12vw, 64px); letter-spacing: .22em; }
+  .intro-text { font-size: 14px; line-height: 1.55; }
+  .intro-actions { gap: 10px; }
+  .intro-actions .btn { flex: 1 1 auto; padding: 15px 14px; }
+  .toast { top: calc(60px + env(safe-area-inset-top)); max-width: 90vw; text-align: center; }
+  .label { font-size: 9px; letter-spacing: .18em; }
+}
+
+/* very short screens (phones in landscape) */
+@media (max-height: 480px) and (orientation: landscape) {
+  .poi-list { bottom: calc(58px + env(safe-area-inset-bottom)); }
+  .info-card { display: none; }
+  .caption { bottom: calc(110px + env(safe-area-inset-bottom)); }
+  .intro-text { display: none; }
+}

@@ -209,7 +209,8 @@ export class Shape {
   /** Append another shape transformed by a Matrix4. */
   add(other, m = null) {
     if (!m) {
-      this.P.push(...other.P); this.N.push(...other.N); this.F.push(...other.F); this.Zn.push(...other.Zn);
+      const cat = (dst, src) => { for (let i = 0; i < src.length; i++) dst.push(src[i]); };
+      cat(this.P, other.P); cat(this.N, other.N); cat(this.F, other.F); cat(this.Zn, other.Zn);
       return this;
     }
     const nm = new THREE.Matrix3().getNormalMatrix(m);
@@ -220,7 +221,8 @@ export class Shape {
       v.set(other.N[i], other.N[i + 1], other.N[i + 2]).applyMatrix3(nm).normalize();
       this.N.push(v.x, v.y, v.z);
     }
-    this.F.push(...other.F); this.Zn.push(...other.Zn);
+    for (let i = 0; i < other.F.length; i++) this.F.push(other.F[i]);
+    for (let i = 0; i < other.Zn.length; i++) this.Zn.push(other.Zn[i]);
     return this;
   }
 

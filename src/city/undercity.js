@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Shape, ShapeBatch, Z, rect, circle } from './geo.js';
 import { beamMatrix } from '../lib/geo.js';
 import { RNG, TAU, clamp } from '../lib/rng.js';
-import { REACTORS, Z_BOW, Z_STERN } from './layout.js';
+import { REACTORS, Z_BOW, Z_STERN, CITY_DETAIL } from './layout.js';
 import { crossSection } from './foundation.js';
 import { Library } from './districts.js';
 import { LightSet, NAV } from '../ship/lights.js';
@@ -90,7 +90,7 @@ export function buildUndercity(M, ctx) {
       let near = 0;
       for (const r of REACTORS) near = Math.max(near, 1 - clamp(Math.hypot(px - r.x, pz - r.z) / 3200, 0, 1));
       const p = 0.08 + 0.5 * core * core + 0.4 * near;
-      if (!rng.chance(p * 0.55)) continue;
+      if (!rng.chance(p * 0.55 * (0.5 + 0.5 * CITY_DETAIL.k))) continue;
       // keep clear of the reactors and the launch rails
       let blocked = false;
       for (const r of REACTORS) if (Math.hypot(px - r.x, pz - r.z) < r.R * 2.6) blocked = true;

@@ -113,8 +113,11 @@ export function createSun({ shadowMapSize = 4096, shadow = null } = {}) {
    * Fit the shadow box around a focus point. `radius` is the half-size wanted near the focus; it is
    * clamped to the ship's full coverage. The centre snaps to whole texels so shadows don't shimmer.
    */
+  let lastKey = '';
   function fit(focus, radius) {
-    if (!S.adaptive) return;
+    if (!S.adaptive) return false;
+    // radius in 15 % steps: the shadow box only changes (and the map only re-renders) when it must
+    radius = Math.pow(1.15, Math.round(Math.log(Math.max(radius, 1)) / Math.log(1.15)));
     const hx = Math.min(S.halfX, Math.max(S.minHalf || 400, radius));
     const hz = Math.min(S.halfZ, Math.max(S.minHalf || 400, radius * (S.aspect || 1)));
     // keep the box inside the ship's coverage region
@@ -129,8 +132,12 @@ export function createSun({ shadowMapSize = 4096, shadow = null } = {}) {
     const lzC = S.center.dot(fwd);
     _c.set(0, 0, 0).addScaledVector(ax, px).addScaledVector(ay, py).addScaledVector(fwd, lzC);
     light.shadow.normalBias = S.normalBias * Math.max(tx, ty);
+    const key = `${px.toFixed(1)},${py.toFixed(1)},${hx.toFixed(1)},${hz.toFixed(1)}`;
+    if (key === lastKey) return false;
+    lastKey = key;
     place(_c, hx, hz);
     void lz;
+    return true;
   }
 
   return {

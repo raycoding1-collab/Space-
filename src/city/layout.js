@@ -3,6 +3,9 @@
 // buildings sit on blocks, blocks sit on terraces and landmarks never collide.
 import { clamp, smoothstep as sm, lerp } from '../lib/rng.js';
 
+// Density of the small things (trees, traffic, signage, hanging towers): 1 on desktops, less on phones.
+export const CITY_DETAIL = { k: 1 };
+
 export const Z_BOW = 16000;
 export const Z_STERN = -16000;
 export const Z_MAXB = -6000; // station of maximum beam
