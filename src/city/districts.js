@@ -56,7 +56,9 @@ class Library {
       const rng = new RNG(1000 + seedIdx * 7919 + b * 131 + name.length * 17);
       const fn = A[name];
       const r = fn(rng, Hb);
-      v = { geo: r.shape.toGeometry(), w: r.w, d: r.d, h: Hb, key, tris: r.shape.triCount, flat: r.flat !== false };
+      // welded (indexed) geometry: identical vertices of neighbouring triangles are shaded once
+      const geo = mergeVertices(r.shape.toGeometry(), 1e-3);
+      v = { geo, w: r.w, d: r.d, h: Hb, key, tris: r.shape.triCount, flat: r.flat !== false };
       this.geos.set(key, v);
     }
     return v;
@@ -71,7 +73,7 @@ class Library {
       this.placed.push({ arch: v.key.split('|')[0], x: e[12], y: e[13], z: e[14], rot: Math.atan2(-e[2], e[0]), s: sc, top, w: v.w * sc, d: v.d * sc, style: styleName, flat: v.flat !== false });
     }
     let e = this.inst.get(v.key);
-    if (!e) { e = { geo: v.geo, list: [], styles: [] }; this.inst.set(v.key, e); }
+    if (!e) { e = { geo: v.geo, list: [], styles: [], h: v.h }; this.inst.set(v.key, e); }
     e.list.push(m4.clone());
     e.styles.push(this.M.style[styleName]);
     this.tris += v.tris;
@@ -88,6 +90,13 @@ class Library {
       mesh.computeBoundingSphere();
       mesh.matrixAutoUpdate = false;
       mesh.userData.minPx = 0.6;
+      // level of detail: a unit box mapped onto the body (footprint inset a little, masts ignored)
+      if (!e.geo.boundingBox) e.geo.computeBoundingBox();
+      const bb = e.geo.boundingBox;
+      const bh = Math.min(bb.max.y, e.h ?? bb.max.y);
+      mesh.userData.lodBox = new THREE.Matrix4().compose(
+        new THREE.Vector3((bb.min.x + bb.max.x) / 2, Math.max(0, bb.min.y), (bb.min.z + bb.max.z) / 2), new THREE.Quaternion(),
+        new THREE.Vector3((bb.max.x - bb.min.x) * 0.85, Math.max(1, bh - Math.max(0, bb.min.y)), (bb.max.z - bb.min.z) * 0.85)).toArray();
       parent.add(mesh);
       n += e.list.length;
     }

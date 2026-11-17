@@ -3,8 +3,14 @@
 // cast into view never pop) and against a minimum on-screen size. Survivors are packed to the front
 // of the instance buffers and the mesh's draw count is cut to match, so the GPU only draws (and only
 // shadow-renders) what can actually be seen.
+//
+// Level of detail: instances whose mesh carries userData.lodBox (a matrix that maps a unit box onto the
+// building's body) are drawn, while they are smaller on screen than lodPx, as plain facade boxes in one
+// shared instanced mesh instead of their full geometry: a 10-triangle box in a single draw call reads
+// the same as a 200-triangle tower when it is a few pixels tall.
 import * as THREE from 'three';
 import { WORLD } from '../world.js';
+import { Shape, Z, rect } from './geo.js';
 
 const _fr = new THREE.Frustum();
 const _pm = new THREE.Matrix4();
@@ -15,7 +21,29 @@ export class InstanceCuller {
   constructor() {
     this.sets = [];
     this.last = { pos: new THREE.Vector3(1e9, 0, 0), quat: new THREE.Quaternion(), fov: 0, h: 0 };
-    this.stats = { total: 0, drawn: 0, ms: 0 };
+    this.stats = { total: 0, drawn: 0, lod: 0, ms: 0 };
+    this.lod = null;
+  }
+
+  /** Create the shared LOD box mesh for every registered set that has a lodBox; add the result to the scene. */
+  enableLod(material, lodPx = 3) {
+    const cap = this.sets.reduce((a, S) => a + (S.lod ? S.n : 0), 0);
+    if (!cap) return null;
+    const sh = new Shape();
+    sh.prism(rect(1, 1, 0, 0), 0, 1, Z.FACADE, Z.ROOF);
+    const geo = sh.toGeometry();
+    const style = new THREE.InstancedBufferAttribute(new Float32Array(cap), 1);
+    style.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('aStyle', style);
+    const mesh = new THREE.InstancedMesh(geo, material, cap);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    mesh.count = 0; mesh.visible = false;
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    mesh.userData.dynamic = true;
+    mesh.name = 'buildings-lod';
+    this.lod = { mesh, style, lodPx };
+    return mesh;
   }
 
   /** Register every static InstancedMesh under root (skipping subtrees that move). */
@@ -50,6 +78,19 @@ export class InstanceCuller {
       if (a.isInstancedBufferAttribute) attrs.push({ a, full: a.array.slice(0, n * a.itemSize), size: a.itemSize });
     }
     if (mesh.instanceColor) attrs.push({ a: mesh.instanceColor, full: mesh.instanceColor.array.slice(0, n * 3), size: 3 });
+    let lod = null;
+    if (mesh.userData.lodBox && geo.attributes.aStyle) {
+      const B = new THREE.Matrix4().fromArray(mesh.userData.lodBox);
+      // full LOD matrices: world (mesh) × instance × unit-box-to-body
+      const LM = new Float32Array(n * 16), ok = new Uint8Array(n);
+      for (let i = 0; i < n; i++) {
+        _m.fromArray(M, i * 16);
+        ok[i] = M[i * 16 + 5] > 0 ? 1 : 0; // only upright instances
+        _m.premultiply(W).multiply(B);
+        _m.toArray(LM, i * 16);
+      }
+      lod = { LM, ok, style: geo.attributes.aStyle.array.slice(0, n) };
+    }
     mesh.frustumCulled = false;
     // chunks of 64 consecutive instances (placement is spatially coherent) with bounding spheres,
     // so whole chunks can be rejected with a single test
@@ -64,7 +105,7 @@ export class InstanceCuller {
       }
       K.set([x, y, z, rmax, ytop], c * 5);
     }
-    this.sets.push({ mesh, n, M, C, R, attrs, minPx, K, CH });
+    this.sets.push({ mesh, n, M, C, R, attrs, minPx, K, CH, lod });
     this.stats.total += n;
   }
 
@@ -90,9 +131,12 @@ export class InstanceCuller {
     const px = viewH * 0.5 / Math.tan((camera.fov * Math.PI) / 360);
     const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
     const sd = WORLD.sunDir, sy = Math.max(0.2, sd.y), sdx = sd.x, sdy = sd.y, sdz = sd.z;
-    let drawn = 0;
+    let drawn = 0, nl = 0;
+    const LOD = this.lod, ldst = LOD ? LOD.mesh.instanceMatrix.array : null, lsty = LOD ? LOD.style.array : null;
+    const llim = LOD ? px / LOD.lodPx : 0;
     for (const S of this.sets) {
       const { mesh, n, M, C, R, attrs, minPx, K, CH } = S;
+      const lod = LOD ? S.lod : null;
       const dst = mesh.instanceMatrix.array;
       const lim = px / minPx;
       let k = 0;
@@ -120,6 +164,16 @@ export class InstanceCuller {
           const h = len * 0.5;
           if (!inF(x - sdx * h, y - sdy * h, z - sdz * h, r + h)) continue;
         }
+        if (lod && lod.ok[i]) {
+          const rq = r * llim;
+          if (rq * rq < d2) {
+            const s16 = i * 16, d16 = nl * 16, LM = lod.LM;
+            for (let j = 0; j < 16; j++) ldst[d16 + j] = LM[s16 + j];
+            lsty[nl] = lod.style[i];
+            nl++;
+            continue;
+          }
+        }
         const s16 = i * 16, d16 = k * 16;
         for (let j = 0; j < 16; j++) dst[d16 + j] = M[s16 + j];
         for (let q = 0; q < attrs.length; q++) {
@@ -137,7 +191,14 @@ export class InstanceCuller {
       for (const A of attrs) { A.a.clearUpdateRanges(); A.a.addUpdateRange(0, Math.max(1, k) * A.size); A.a.needsUpdate = true; }
       drawn += k;
     }
+    if (LOD) {
+      const m = LOD.mesh;
+      m.count = nl; m.visible = nl > 0;
+      m.instanceMatrix.clearUpdateRanges(); m.instanceMatrix.addUpdateRange(0, Math.max(1, nl) * 16); m.instanceMatrix.needsUpdate = true;
+      LOD.style.clearUpdateRanges(); LOD.style.addUpdateRange(0, Math.max(1, nl)); LOD.style.needsUpdate = true;
+    }
     this.stats.drawn = drawn;
+    this.stats.lod = nl;
     this.stats.ms = performance.now() - t0;
   }
 }

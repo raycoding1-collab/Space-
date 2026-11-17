@@ -14,7 +14,7 @@ import { buildStern } from './stern.js';
 import { buildLife } from './life.js';
 import { InstanceCuller } from './culling.js';
 import { buildExtras } from './extras.js';
-import { GRID, POLAR, SPIRE, CITY_DETAIL } from './layout.js';
+import { GRID, POLAR, SPIRE, CITY_DETAIL, halfWidth } from './layout.js';
 import { lightUniforms } from '../ship/lights.js';
 import { conduitTime } from '../ship/conduit.js';
 
@@ -66,19 +66,40 @@ export async function buildCity({ quality, step, scene }) {
   await step('Mooring the harbours', 0.8);
   root.add(buildHarbours(M, ctx));
   await step('Lighting the reactor suns', 0.84);
-  root.add(buildUndercity(M, ctx));
+  {
+    // the undercity's meshes are skipped while the camera is over the deck, where the city hides them
+    // (its reactor lights stay, so no material has to recompile)
+    const uc = buildUndercity(M, ctx);
+    const body = new THREE.Group();
+    body.name = 'undercity-body';
+    for (const ch of [...uc.children]) if (!ch.isLight) body.add(ch);
+    uc.add(body);
+    root.add(uc);
+    ctx.frame.push((camera) => {
+      const p = camera.position;
+      body.visible = !(p.y > 60 && Math.abs(p.x) < halfWidth(p.z) - 600);
+    });
+  }
   await step('Warming the drives', 0.88);
   root.add(buildStern(M, ctx));
   await step('Waking the city', 0.92);
   root.add(buildLife(M, ctx, { envTex: scene.background, quality, lib: ctx.lib }));
 
   await step('Adding the fine detail', 0.95);
-  root.add(buildExtras(M, ctx, ctx.lib));
+  const extras = buildExtras(M, ctx, ctx.lib);
+  root.add(extras);
+  ctx.frame.push((camera) => extras.userData.trafficCull(camera, lightUniforms.uViewH.value));
   // per-frame culling of every static instance (buildings, trees, ships, frames…)
   {
     const culler = new InstanceCuller();
     culler.registerTree(root, [ctx.halo, ctx.vespera].filter(Boolean));
     ctx.culler = culler;
+    // film renders can trade sub-pixel detail for speed: ?cullk= scales every minimum size, ?lodpx= the box LOD
+    const qp = new URLSearchParams(location.search);
+    const ck = parseFloat(qp.get('cullk') || '1');
+    if (ck !== 1) for (const S of culler.sets) S.minPx *= ck;
+    const lod = culler.enableLod(M.buildings, parseFloat(qp.get('lodpx') || '3'));
+    if (lod) root.add(lod);
     ctx.frame.push((camera) => culler.update(camera, lightUniforms.uViewH.value));
     console.log(`[city] culler: ${culler.sets.length} meshes, ${culler.stats.total} instances`);
   }

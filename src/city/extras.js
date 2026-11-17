@@ -112,15 +112,49 @@ function buildGroundTraffic(root, rng) {
   };
   addRuns('z'); addRuns('x');
   const n = routes.length / 4;
-  const geo = podGeometry();
-  geo.setAttribute('aRoute', new THREE.InstancedBufferAttribute(new Float32Array(routes), 4));
-  geo.setAttribute('aMove', new THREE.InstancedBufferAttribute(new Float32Array(moves), 4));
-  geo.setAttribute('aTint', new THREE.InstancedBufferAttribute(new Float32Array(tints), 3));
-  const mesh = new THREE.InstancedMesh(geo, trafficMaterial(), n);
-  mesh.frustumCulled = false;
-  mesh.userData.dynamic = true;
-  mesh.name = 'ground-traffic';
-  root.add(mesh);
+  // Each pod drives one stretch (≤ 1.6 km) of its street, starting where it was placed, and the
+  // stretches are grouped into 2 km cells. A cell is drawn only when it is in view and its pods
+  // would be at least half a pixel long, instead of every pod in the city on every frame.
+  const SEG = 1600, CELL = 2000, POD = 7;
+  const cells = new Map();
+  for (let i = 0; i < n; i++) {
+    const [sx, sz, hd, L] = routes.slice(i * 4, i * 4 + 4);
+    const nS = Math.max(1, Math.ceil(L / SEG)), segL = L / nS, d0 = moves[i * 4 + 1] * L;
+    const k = Math.min(nS - 1, Math.floor(d0 / segL));
+    const dx = Math.sin(hd), dz = Math.cos(hd);
+    const x0 = sx + dx * k * segL, z0 = sz + dz * k * segL;
+    const key = `${Math.floor((x0 + dx * segL / 2) / CELL)},${Math.floor((z0 + dz * segL / 2) / CELL)}`;
+    if (!cells.has(key)) cells.set(key, { r: [], m: [], t: [], box: new THREE.Box3() });
+    const c = cells.get(key);
+    c.r.push(x0, z0, hd, segL);
+    c.m.push(moves[i * 4], (d0 - k * segL) / segL, moves[i * 4 + 2], moves[i * 4 + 3]);
+    c.t.push(...tints.slice(i * 3, i * 3 + 3));
+    c.box.expandByPoint(new THREE.Vector3(x0, 0, z0)).expandByPoint(new THREE.Vector3(x0 + dx * segL, 0, z0 + dz * segL));
+  }
+  const pod = podGeometry(), mat = trafficMaterial(), cellMeshes = [];
+  routes.length = 0; moves.length = 0; tints.length = 0;
+  for (const c of cells.values()) {
+    const geo = pod.clone();
+    geo.setAttribute('aRoute', new THREE.InstancedBufferAttribute(new Float32Array(c.r), 4));
+    geo.setAttribute('aMove', new THREE.InstancedBufferAttribute(new Float32Array(c.m), 4));
+    geo.setAttribute('aTint', new THREE.InstancedBufferAttribute(new Float32Array(c.t), 3));
+    const mesh = new THREE.InstancedMesh(geo, mat, c.r.length / 4);
+    c.box.expandByScalar(30); c.box.min.y = -50; c.box.max.y = 1200;
+    mesh.boundingSphere = c.box.getBoundingSphere(new THREE.Sphere());
+    mesh.userData.dynamic = true;
+    mesh.name = 'ground-traffic';
+    root.add(mesh);
+    cellMeshes.push(mesh);
+    routes.push(...c.r); moves.push(...c.m); tints.push(...c.t);
+  }
+  root.userData.trafficCells = cellMeshes;
+  root.userData.trafficCull = (camera, viewH) => {
+    const k = POD * viewH / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    for (const m of cellMeshes) {
+      const d = camera.position.distanceTo(m.boundingSphere.center) - m.boundingSphere.radius;
+      m.visible = d <= 0 || k / d > 0.5;
+    }
+  };
   // head and tail lights as glowing sprites, animated with the same route maths
   const pg = new THREE.BufferGeometry();
   const R2 = new Float32Array(n * 8), M2 = new Float32Array(n * 8), S2 = new Float32Array(n * 2);

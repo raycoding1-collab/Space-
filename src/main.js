@@ -56,6 +56,7 @@ const PRESETS = {
 };
 const qName = params.get('q') || (IS_MOBILE ? 'mobile' : 'high');
 const quality = { detail: 1, minScale: 0.6, targetFps: 55, ...(PRESETS[qName] || PRESETS.high) };
+if (params.has('samples')) quality.samples = parseInt(params.get('samples'), 10); // MSAA override (film renders)
 const SCALE_STEPS = [0.6, 0.8, 1.0, 1.25, 1.5, 2.0];
 
 const STILL = params.has('still');
@@ -317,10 +318,10 @@ async function init() {
     },
     renderStill,
     /** Film frames: keep the canvas at w×h between calls (no resize per frame), advance and render. */
-    renderFrame(w, h, type = 'image/png', q = 0.95) {
+    renderFrame(w, h, type = 'image/png', q = 0.95, shadowEvery = 2) {
       if (renderer.domElement.width !== w || renderer.domElement.height !== h) applySize(w, h, 1);
-      // shadows: re-rendered when their frame moves, otherwise every other frame (for moving traffic)
-      filmShadowEvery = 2;
+      // shadows: re-rendered when their frame moves, otherwise every Nth frame (for moving traffic)
+      filmShadowEvery = shadowEvery;
       tick(0);
       render();
       return renderer.domElement.toDataURL(type, q);

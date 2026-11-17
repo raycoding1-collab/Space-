@@ -1,7 +1,7 @@
 // Renders a film, frame by frame, from the live engine (headless Chromium).
 //
 //   node tools/render-film.js <shots.json> <outdir> [--w 1920] [--h 800] [--fps 24] [--q high]
-//                             [--from 0] [--to N] [--every 1] [--offset 0]
+//                             [--from 0] [--to N] [--every 1] [--offset 0] [--samples 4] [--shadow-every 2] [--query 'cullk=2&lodpx=4']
 //
 // shots.json: { "fps": 24, "t0": 120, "shots": [ { "name", "dur", "fov" | "fovs": [..],
 //               "keys": [ { "pos": [x,y,z], "target": [x,y,z] }, ... ], "ease": 0..1 } ] }
@@ -17,6 +17,7 @@ const argv = process.argv.slice(2);
 const shotsFile = argv[0], outdir = argv[1];
 const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d; };
 const W = +opt('w', 1920), H = +opt('h', 800), Q = opt('q', 'high');
+const SAMPLES = opt('samples', null), SHADOW_EVERY = +opt('shadow-every', 2), EXTRA = opt('query', '');
 const film = JSON.parse(fs.readFileSync(shotsFile, 'utf8'));
 const FPS = +opt('fps', film.fps || 24);
 const every = +opt('every', 1), offset = +opt('offset', 0);
@@ -68,17 +69,17 @@ if (argv.includes('--list')) { console.log(`${frames.length} frames, ${(frames.l
   p.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`));
   p.on('pageerror', (e) => { console.log(`[pageerror] ${e.message}`); });
   const tl = Date.now();
-  await p.goto(`${process.env.BASE_URL || 'http://127.0.0.1:8765'}/index.html?still&ship=city&q=${Q}`, { waitUntil: 'load' });
+  await p.goto(`${process.env.BASE_URL || 'http://127.0.0.1:8765'}/index.html?still&ship=city&q=${Q}${SAMPLES !== null ? `&samples=${SAMPLES}` : ''}${EXTRA ? `&${EXTRA}` : ''}`, { waitUntil: 'load' });
   await p.waitForFunction(() => window.VESPERA && window.VESPERA.renderFrame, null, { timeout: 1800000, polling: 1000 });
   console.log(`ready ${((Date.now() - tl) / 1000).toFixed(1)}s`);
   let done = 0; const ts = Date.now();
   for (const f of todo) {
-    const url = await p.evaluate(([W, H, f]) => {
+    const url = await p.evaluate(([W, H, f, se]) => {
       const V = window.VESPERA, T = V.camera.position.constructor;
       V.setView({ pos: new T(...f.pos), target: new T(...f.target), fov: f.fov });
       V.setSimTime(f.time);
-      return V.renderFrame(W, H);
-    }, [W, H, f]);
+      return V.renderFrame(W, H, 'image/png', 0.95, se);
+    }, [W, H, f, SHADOW_EVERY]);
     fs.writeFileSync(path.join(outdir, `f${String(f.i).padStart(5, '0')}.png`), Buffer.from(url.split(',')[1], 'base64'));
     done++;
     if (done % 10 === 0 || done === todo.length) {
