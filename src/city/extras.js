@@ -419,7 +419,7 @@ function buildBoulevards(root, M, rng) {
       const along = t + rng.range(-2, 2);
       for (const o of [-4.5, 4.5]) {
         const x = R.axis === 'z' ? R.c + o : along, z = R.axis === 'z' ? along : R.c + o;
-        trees.push([x, 0, z, rng.range(0.7, 0.95), rng.next()]);
+        trees.push([x, 0, z, rng.range(0.5, 0.66), rng.next()]);
       }
     }
     for (let t = R.a + 20; t < R.b - 20; t += lStep) {

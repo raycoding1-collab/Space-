@@ -142,7 +142,7 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
   }
   vec2 c = vec2(f.x / bayW, f.y / floorH);
   vec2 w = max(fwidth(c), vec2(1e-5));
-  float far = smoothstep(0.1, 0.45, max(w.x, w.y));
+  float far = smoothstep(0.07, 0.3, max(w.x, w.y));
   float bumpK = 1.0 - smoothstep(0.035, 0.14, max(w.x, w.y));
   float du = 0.86, dv = 0.78, recess = 0.35;
   vec3 frame = uFrame;
@@ -168,10 +168,13 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
   vec2 id = floor(vec2(c.x, cy));
   float r = hashI(id + vec2(seed * 913.0, seed * 37.0));
   // lights come on in runs along a floor (an office, an apartment row), with the odd dark window
-  float runLen = 5.0 + floor(hashI(vec2(id.y, seed * 13.0 + 3.0)) * 12.0);
+  // lights come on in blocks: a tenant's few floors × a run of bays, like offices and apartments
+  float runLen = 6.0 + floor(hashI(vec2(floor(id.y / 5.0), seed * 13.0 + 3.0)) * 14.0);
   float runId = floor(c.x / runLen);
-  float run = hashI(vec2(runId, id.y) + vec2(seed * 51.0, 11.0));
-  float r2 = hashI(vec2(runId * 1.7, id.y) + vec2(31.0 + seed * 77.0, 5.0));
+  float fBlock = 2.0 + floor(hashI(vec2(runId, seed * 7.0 + 1.0)) * 5.0);
+  float rowId = floor(id.y / fBlock);
+  float run = hashI(vec2(runId, rowId) + vec2(seed * 51.0, 11.0));
+  float r2 = hashI(vec2(runId * 1.7, rowId) + vec2(31.0 + seed * 77.0, 5.0));
   float on = step(run, litP) * step(0.1, r);
   float ph = fract(uCityTime * (0.002 + 0.012 * r2) + run * 7.0);
   on *= step(0.04, ph);
