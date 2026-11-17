@@ -6,13 +6,14 @@ import { WORLD } from '../world.js';
 
 // ------------------------------------------------------------------ shared uniforms
 const DEBUG = new URLSearchParams(location.search).has('dbg');
+const HZ = parseFloat(new URLSearchParams(location.search).get('haze') || '85000');
 export const CITY_U = {
   uCityTime: { value: 0 },
   uHazeC: { value: new THREE.Vector3(0, 900, -400) },
   uHazeR: { value: new THREE.Vector3(9800, 6600, 19800) },
-  uHazeK: { value: 1 / 70000 },
+  uHazeK: { value: 1 / HZ },
   uHazeFloor: { value: -420 },
-  uHazeCol: { value: new THREE.Vector3(0.36, 0.5, 0.82) },
+  uHazeCol: { value: new THREE.Vector3(0.24, 0.34, 0.6) },
   uSunDirC: { value: WORLD.sunDir },
 };
 
@@ -132,7 +133,7 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
     float sh = hashI(vec2(sid, 3.0) + seed * 101.0);
     segH = sh;
     float sp = hashI(vec2(sid, 17.0) + seed * 7.0);
-    pat = sp < 0.3 ? pat : (sp < 0.48 ? 2 : (sp < 0.64 ? 1 : (sp < 0.8 ? 0 : 5)));
+    pat = sp < 0.78 ? pat : (pat == 5 ? 2 : 5);
     float pc = hashI(vec2(sid, 29.0));
     vec3 pal = pc < 0.25 ? vec3(0.84, 0.8, 0.72) : (pc < 0.45 ? vec3(0.76, 0.68, 0.56) : (pc < 0.62 ? vec3(0.6, 0.58, 0.55) : (pc < 0.78 ? vec3(0.74, 0.58, 0.48) : vec3(0.88, 0.87, 0.85))));
     panel = mix(uPanel, pal, 0.4) * mix(0.94, 1.04, sh);
@@ -225,6 +226,16 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
     float lv = fpc(lc, max(fwidth(lc), 1e-5), 0.45);
     alb = mix(alb, uAccent * 0.85, lv * 0.85); metal = mix(metal, 0.8, lv); rough = mix(rough, 0.35, lv);
     emis *= 1.0 - 0.65 * lv; h += lv * 0.25;
+  }
+  // long city walls: deep galleries every 24 floors, with a lit soffit
+  if (uFacC.w > 0.0) {
+    float gy = c.y / 24.0;
+    float gal = fp(gy, w.y / 24.0, 1.4 / 24.0);
+    float soffit = fp(gy - 1.25 / 24.0, w.y / 24.0, 0.12 / 24.0);
+    alb = mix(alb, vec3(0.03), gal); emis = mix(emis, vec3(0.0), gal);
+    emis += soffit * vec3(1.0, 0.78, 0.5) * 1.6;
+    metal = mix(metal, 0.0, gal); rough = mix(rough, 0.9, gal);
+    h -= gal * 3.0;
   }
   // mechanical bands
   float louv = fp(c.y * 5.0, w.y * 5.0, 0.5);

@@ -43,14 +43,17 @@ export function buildStern(M, ctx) {
   for (let k = 0; k < 12; k++) aux.push([(k - 5.5) * 760, -330]);
   for (let k = 0; k < 6; k++) aux.push([(k - 2.5) * 1230 + (k < 3 ? -615 : 615) * 0, -1820]);
   for (let k = 0; k < 6; k++) aux.push([(k < 3 ? -1 : 1) * (4300 - (k % 3) * 0) , -560 - (k % 3) * 360]);
+  let nAux = 0;
   aux.slice(0, 24).forEach(([x, y]) => {
     const s = crossSection(Z_STERN);
     if (Math.abs(x) > s.X - 160) return;
+    nAux++;
     addEngine(sys, batch, root, plumes, lights, EM, darkI, { cx: x, cy: y, zThroat: zW - 20, rThroat: 42, rExit: 105, len: 190, coils: 2, plumeLen: 2600, segs: 36 });
     const hs = new Shape();
     hs.loft([circle(128, 36, x, y).map(([a, b]) => [a, b, zW + 2]), circle(128, 36, x, y).map(([a, b]) => [a, b, zW - 26])], Z.METAL, { closed: true, orient: (p) => [p[0] - x, p[1] - y, 0] });
     B.get(M.engineHousing).add(hs);
   });
+  console.log(`[city] auxiliaries: ${nAux}`);
   batch.build(root, { name: 'engines' });
   darkI.build(root, 'engine-ribs');
   root.add(plumes);

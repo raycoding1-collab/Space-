@@ -178,6 +178,7 @@ export function buildIndustry(M, ctx) {
     }
   }
   // radiator panels (instanced)
+  console.log(`[city] radiators: ${radiators.length}`);
   if (radiators.length) {
     const panel = new THREE.BoxGeometry(6, 160, 70).translate(0, 80, 0);
     const rm = new THREE.ShaderMaterial({
@@ -230,6 +231,7 @@ function buildConstruction(M, ctx, root, B, lights, rng) {
       sites.push([x + rng.range(-60, 60), z + rng.range(-60, 60)]);
     }
   }
+  console.log(`[city] construction sites: ${sites.length}`);
   sites.forEach(([cx, cz], k) => {
     const s = rng.range(50, 74), H = rng.range(320, 760);
     const done = H * rng.range(0.25, 0.5), frame = H * rng.range(0.7, 0.92);

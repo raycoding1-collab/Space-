@@ -169,7 +169,9 @@ export function buildDistricts(M, ctx, blocks) {
         // cell: radial depth (minus ring streets) × arc (minus avenues)
         const depth = POLAR.ring - POLAR.ringStreet - 24;
         const arc = (th1 - th0) * rMid - POLAR.avenue - 24;
-        const nAlong = k >= 3 ? 1 : (k === 2 ? rng.int(1, 2) : rng.int(2, 3));
+        // some cells stay open as plazas and gardens between the towers
+        if (rng.chance(k >= 2 ? 0.3 : 0.2)) continue;
+        const nAlong = k >= 3 ? 1 : (k === 2 ? rng.int(1, 2) : rng.int(1, 3));
         for (let a = 0; a < nAlong; a++) {
           const th = th0 + (th1 - th0) * ((a + 0.5) / nAlong) + rng.range(-0.01, 0.01);
           const r = rMid + rng.range(-20, 20);
@@ -180,15 +182,16 @@ export function buildDistricts(M, ctx, blocks) {
           let arch, H, palette;
           if (k >= 2) {
             arch = rng.weighted([['blade', 2], ['twin', 1.4], ['ziggurat', 1.2], ['twisted', 2], ['needle', 1.6], ['crowned', 1.6], ['trifoil', 1.4], ['gate', 0.5], ['crystal', 1.2]]);
-            H = (k === 3 ? rng.range(760, 1380) : rng.range(460, 900)) * (0.9 + 0.1 * lvl / 4);
+            const r = Math.pow(rng.next(), 2.2);
+            H = (k === 3 ? 620 + 760 * r : 360 + 560 * r) * (0.9 + 0.1 * lvl / 4);
             palette = PALETTE.spireHi;
           } else if (k === 1) {
             arch = rng.weighted([['blade', 1], ['twisted', 1], ['needle', 1], ['crowned', 1], ['crystal', 0.8], ['stack', 1], ['podiumTower', 1.6], ['cylinders', 1], ['ziggurat', 0.8]]);
-            H = rng.range(260, 560);
+            H = 200 + 360 * Math.pow(rng.next(), 2.0);
             palette = PALETTE.spireLo;
           } else {
             arch = rng.weighted([['podiumTower', 2], ['slab', 1], ['stack', 1], ['cylinders', 1], ['roundedBlock', 1], ['hexTower', 1], ['crowned', 0.4], ['twisted', 0.4]]);
-            H = rng.range(130, 340);
+            H = 100 + 240 * Math.pow(rng.next(), 1.8);
             palette = PALETTE.spireLo;
           }
           const v = lib.variant(arch, H, rng.int(0, 2));
@@ -220,7 +223,7 @@ function districtProfile(dc, x, z, spireDist, rng) {
   const dS = spireDist(x, z);
   if (dc === D.CENTRAL) {
     const near = 1 - clamp((dS - 4200) / 6000, 0, 1);
-    const H = 60 + (90 + 330 * near * near) * Math.pow(rng.next(), 0.9);
+    const H = 50 + (80 + 340 * near * near) * Math.pow(rng.next(), 1.7);
     const arch = H > 200
       ? rng.weighted([['podiumTower', 2], ['twisted', 0.6], ['blade', 0.4], ['cylinders', 1], ['stack', 0.8], ['crowned', 0.5], ['hexTower', 0.7]])
       : rng.weighted([['podiumTower', 1.4], ['slab', 1.2], ['roundedBlock', 1], ['lblock', 1], ['courtyard', 1], ['hexTower', 0.8], ['terraced', 0.6]]);

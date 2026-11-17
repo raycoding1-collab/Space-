@@ -124,7 +124,7 @@ export function buildUndercity(M, ctx) {
     halo.renderOrder = 2;
     root.add(halo);
     // light from the sun onto the belly and the hanging towers
-    const pl = new THREE.PointLight(new THREE.Color(1.0, 0.72, 0.45), 4.5e5, 0, 2);
+    const pl = new THREE.PointLight(new THREE.Color(1.0, 0.72, 0.45), 1.2e6, 0, 2);
     pl.position.copy(c);
     root.add(pl);
     // lattice cage: meridians and rings
