@@ -129,6 +129,29 @@ export class Shape {
     return this;
   }
 
+  /** Cap a 3D ring that is planar but not necessarily horizontal (triangulated in its xz projection). */
+  capRing(ring, zone, n = null) {
+    const contour = ring.map((p) => new THREE.Vector2(p[0], p[2]));
+    const tris = THREE.ShapeUtils.triangulateShape(contour, []);
+    let nn = n;
+    if (!nn) {
+      // Newell normal
+      let nx = 0, ny = 0, nz = 0;
+      for (let i = 0; i < ring.length; i++) {
+        const a = ring[i], c = ring[(i + 1) % ring.length];
+        nx += (a[1] - c[1]) * (a[2] + c[2]); ny += (a[2] - c[2]) * (a[0] + c[0]); nz += (a[0] - c[0]) * (a[1] + c[1]);
+      }
+      const l = Math.hypot(nx, ny, nz) || 1;
+      nn = [nx / l, ny / l, nz / l];
+      if (nn[1] < 0) nn = [-nn[0], -nn[1], -nn[2]];
+    }
+    for (const [a, b, c] of tris) {
+      const A = ring[a], B = ring[b], Cc = ring[c];
+      this.tri(A, B, Cc, nn, nn, nn, [A[0], A[2]], [B[0], B[2]], [Cc[0], Cc[2]], zone);
+    }
+    return this;
+  }
+
   /** Prism: walls plus a roof cap (and optionally a floor). */
   prism(poly, y0, y1, zone, roofZone = Z.ROOF, { bottom = false, crease = 40, u0 = 0 } = {}) {
     this.walls(poly, y0, y1, zone, { crease, u0 });
