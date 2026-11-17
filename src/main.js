@@ -1,6 +1,6 @@
 // VESPERA — entry point.
 import * as THREE from 'three';
-import { WORLD, SHIP } from './world.js';
+import { WORLD } from './world.js';
 import { bakeSky } from './env/sky.js';
 import { createStars } from './env/stars.js';
 import { createPlanetSystem } from './env/planet.js';

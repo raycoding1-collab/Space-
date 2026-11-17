@@ -5,7 +5,7 @@ import { RNG, TAU, DEG, clamp } from '../lib/rng.js';
 import {
   HULL, hullParams, hullPolygon, N_POLY, rightEdge, facetStrip, armourPlate, plateLayout, sternCap, facetFrame, QuadBuilder,
 } from './hull.js';
-import { makeConduitMaterial } from './conduit.js';
+import { makeConduitMaterial, makeArteryMaterial } from './conduit.js';
 import { LightSet, NAV } from './lights.js';
 import { GREEBLE_TONES } from './greebles.js';
 import { createEngineSystem, addEngine } from './engines.js';
@@ -458,6 +458,104 @@ export function buildCapitalShip(M, ctx) {
   for (const e of [9, 16]) scatterFacet(e, ZS + 40, 2300, 260, 3, [3, 10, 1, 4, 4, 18], [2, 3, 4]);
   for (const e of [8, 17]) scatterFacet(e, ZS + 40, 2000, 220, 3, [3, 10, 1, 4, 4, 16], [2, 3, 4, 5]);
   for (const e of [0, 25]) scatterFacet(e, ZS + 40, 2000, 200, 2.5, [3, 12, 1, 4, 4, 20], [3, 4]);
+
+  // ============================================================== reactor heart & circulatory arteries
+  const CORE_Z = 380;
+  {
+    const p = hullParams(CORE_Z);
+    const floor = p.Ht - p.td;
+    const core = new THREE.Group();
+    core.name = 'reactor-heart';
+    core.position.set(0, floor + 6, CORE_Z);
+    core.add(new THREE.Mesh(new THREE.SphereGeometry(11, 32, 16), M.glowCore));
+    const rings = [];
+    for (const [r, axis, spd] of [[17, new THREE.Vector3(1, 0, 0), 0.5], [21, new THREE.Vector3(0, 0, 1), -0.35], [25, new THREE.Vector3(0.7, 0.7, 0).normalize(), 0.22]]) {
+      const g = new THREE.Group();
+      const tor = new THREE.Mesh(new THREE.TorusGeometry(r, 1.3, 8, 72), M.chrome);
+      const glowT = new THREE.Mesh(new THREE.TorusGeometry(r, 0.45, 6, 72), M.glowCyan);
+      glowT.position.z = 1.2;
+      g.add(tor, glowT);
+      g.userData = { axis, spd };
+      core.add(g);
+      rings.push(g);
+    }
+    root.add(core);
+    ctx.animated.push((t) => {
+      rings.forEach((g, i) => { g.quaternion.setFromAxisAngle(g.userData.axis, t * g.userData.spd + i); g.rotateOnAxis(new THREE.Vector3(0, 0, 1), t * 0.3 * (i + 1)); });
+    });
+    batch.add(new THREE.TorusGeometry(27, 2.6, 10, 72).rotateX(Math.PI / 2), M.armorDark, new THREE.Matrix4().makeTranslation(0, floor + 0.8, CORE_Z));
+    lights.add(new THREE.Vector3(0, floor + 6, CORE_Z), new THREE.Color(0.45, 0.78, 1.0), { intensity: 0.9, size: 8 });
+    // containment pylons around the well
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * TAU;
+      const base = new THREE.Vector3(Math.cos(a) * 29, floor, CORE_Z + Math.sin(a) * 29);
+      if (Math.abs(base.x) > p.tw - 2) continue;
+      beamMatrix(base, base.clone().setY(floor + 26), 2.5, 2.5, null, m4); darkI.add(m4);
+      lights.add(base.clone().setY(floor + 27), NAV.cyan, { intensity: 5, size: 1.4 });
+    }
+  }
+
+  // Arteries: transverse veins of light from the trench, over the decks, down into the flank channels,
+  // and beneath the keel from channel to channel — the visible circulatory system of the ship.
+  {
+    const vertexNormal = (poly, i) => {
+      const n = poly.length;
+      const a = poly[(i - 1 + n) % n], b = poly[i], c = poly[(i + 1) % n];
+      const n1 = [b[1] - a[1], -(b[0] - a[0])], n2 = [c[1] - b[1], -(c[0] - b[0])];
+      const l1 = Math.hypot(...n1) || 1, l2 = Math.hypot(...n2) || 1;
+      const nx = n1[0] / l1 + n2[0] / l2, ny = n1[1] / l1 + n2[1] / l2;
+      const l = Math.hypot(nx, ny) || 1;
+      return [nx / l, ny / l];
+    };
+    const pathFrom = (z, idx, off, sx = 1) => {
+      const poly = hullPolygon(z);
+      const pts = [];
+      for (const i of idx) {
+        const q = poly[i];
+        const [nx, ny] = vertexNormal(poly, i);
+        const v = new THREE.Vector3((q[0] + nx * off) * sx, q[1] + ny * off, z);
+        if (!pts.length || pts[pts.length - 1].distanceTo(v) > 1.5) pts.push(v);
+      }
+      return pts;
+    };
+    const addArtery = (pts, radius, seed, color) => {
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.15);
+      const len = curve.getLength();
+      const mat = makeArteryMaterial({ color, speed: 150, base: 0.5, packet: 5.5, spacing: 110, length: len, seed });
+      const tube = new THREE.TubeGeometry(curve, Math.max(24, Math.round(len / 10)), radius, 8, false);
+      const mesh = new THREE.Mesh(tube, mat);
+      root.add(mesh);
+      // clamps holding the artery to the hull
+      for (let u = 0.04; u < 1; u += 30 / len) {
+        const p = curve.getPointAt(u);
+        lights.add(p.clone(), NAV.cyan, { intensity: 1.2, size: 0.6 });
+      }
+      return curve;
+    };
+    const cyan = new THREE.Vector3(0.25, 0.75, 1.0);
+    const dorsalIdx = [13, 12, 11, 10, 9, 8, 7, 6];
+    const dorsalZ = [-760, -40, CORE_Z - 34, CORE_Z, CORE_Z + 34, 820, 1560, 1960];
+    dorsalZ.forEach((z, k) => {
+      for (const sx of [1, -1]) {
+        const pts = pathFrom(z, dorsalIdx, z === CORE_Z ? 9 : 7, sx);
+        // end inside the glowing channel
+        const p = hullParams(z);
+        pts.push(new THREE.Vector3(sx * (p.W - p.rd + 1), 0, z));
+        addArtery(pts, z === CORE_Z ? 2.8 : 1.9, k * 3 + (sx > 0 ? 1 : 2), cyan);
+      }
+      // junction node where the artery leaves the trench
+      const p = hullParams(z);
+      lights.add(new THREE.Vector3(0, p.Ht - p.td + 5, z), new THREE.Color(0.45, 0.8, 1.0), { intensity: 4, size: 3 });
+    });
+    const ventralIdx = [4, 3, 2, 1, 0];
+    for (const [k, z] of [-1300, 250, 900, 1700].entries()) {
+      const right = pathFrom(z, ventralIdx, 6, 1);
+      const left = pathFrom(z, ventralIdx, 6, -1).reverse();
+      const p = hullParams(z);
+      const pts = [new THREE.Vector3(p.W - p.rd + 1, 0, z), ...right, ...left.slice(1), new THREE.Vector3(-(p.W - p.rd + 1), 0, z)];
+      addArtery(pts, 1.9, 40 + k, new THREE.Vector3(0.3, 0.7, 1.0));
+    }
+  }
 
   // ============================================================== turrets along the dorsal shoulders
   {

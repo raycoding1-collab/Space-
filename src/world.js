@@ -32,18 +32,3 @@ export const WORLD = {
   const c = WORLD.galCenter;
   c.sub(n.clone().multiplyScalar(c.dot(n))).normalize();
 }
-
-export const SHIP = {
-  length: 7040,
-  bowZ: 3700,
-  sternZ: -3340,
-  ringA: { z: 2470, R: 1060 },
-  ringB: { z: 2190, R: 1060 },
-  arcadia: { z0: -900, z1: 1150, R: 480, Ri: 472 },
-  nexus: { z0: 1340, z1: 1860 },
-  foundry: { z0: -1480, z1: -1130 },
-  cargo: { z0: -1640, z1: -1515 },
-  reactorsZ: [-1880, -2330],
-  radiators: { z0: -2560, z1: -1660, r0: 150, r1: 1180 },
-  engines: { z: -2940 },
-};

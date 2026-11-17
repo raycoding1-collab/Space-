@@ -1,6 +1,28 @@
 // Material library for the ship. Physically based hull + HDR emissive systems.
 import * as THREE from 'three';
 import { makeHullTextures, makeFoilNormal, makeRadiatorTextures, makeBayTexture } from './textures.js';
+import { conduitTime } from './conduit.js';
+
+/** Windows that occasionally go dark and relight — people moving through the ship. */
+function livingWindows(mat, S) {
+  const gx = (S / 21).toFixed(4), gy = (S / Math.round(S / 40)).toFixed(4);
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uLifeTime = conduitTime;
+    shader.fragmentShader = 'uniform float uLifeTime;\n' + shader.fragmentShader.replace('#include <emissivemap_fragment>', `
+#ifdef USE_EMISSIVEMAP
+  vec4 emissiveColor = texture2D( emissiveMap, vEmissiveMapUv );
+  vec2 wt = floor(vEmissiveMapUv);
+  vec2 wf = fract(vEmissiveMapUv);
+  vec2 wcell = vec2(floor(wf.x * ${gx}), floor((1.0 - wf.y) * ${gy})) + wt * 1000.0;
+  float wh = fract(sin(dot(wcell, vec2(12.9898, 78.233))) * 43758.5453);
+  float wh2 = fract(wh * 91.7 + 0.31);
+  float wph = fract(uLifeTime * (0.006 + 0.03 * wh2) + wh);
+  float won = mix(0.06, 1.0, step(0.09, wph)) * (0.85 + 0.15 * sin(uLifeTime * 0.05 + wh * 30.0));
+  totalEmissiveRadiance *= emissiveColor.rgb * won;
+#endif`);
+  };
+  mat.customProgramCacheKey = () => 'living-windows';
+}
 
 export function createMaterials({ texSize = 2048, aniso = 8 } = {}) {
   const T = makeHullTextures(texSize, aniso);
@@ -53,6 +75,7 @@ export function createMaterials({ texSize = 2048, aniso = 8 } = {}) {
   M.habDark = M.hab.clone();
   M.habDark.color = new THREE.Color(0.22, 0.23, 0.25);
   M.habDark.emissiveIntensity = 4.2;
+  livingWindows(M.habDark, texSize);
 
   // Gold multi-layer insulation
   M.gold = new THREE.MeshStandardMaterial({
@@ -124,6 +147,7 @@ export function createMaterials({ texSize = 2048, aniso = 8 } = {}) {
   M.glowViolet = glow(0.5, 0.4, 1.0, 3.2);
   M.glowSun = glow(1.0, 0.86, 0.62, 30);
   M.seam = glow(0.3, 0.75, 1.0, 1.6);
+  M.glowCore = glow(0.5, 0.82, 1.0, 4.2);
   M.glowThroat = glow(0.75, 0.88, 1.0, 3.2);
   M.seamWarm = glow(1.0, 0.62, 0.3, 1.4);
   M.bridge = glow(1.0, 0.7, 0.42, 0.6);

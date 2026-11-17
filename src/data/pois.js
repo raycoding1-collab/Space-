@@ -8,7 +8,7 @@ export const POIS = [
     id: 'overview', name: 'Overview', kicker: 'Capital starship', title: 'VESPERA',
     text: 'Flagship of the Outer Reach: a 5.8 km dagger of layered armour, glowing seams and machinery. Eighty-six thousand souls live and work aboard.',
     stats: [['Length', '5.79 km'], ['Beam', '1.83 km'], ['Souls aboard', '86,400'], ['Decks', '214'], ['Cruise', '0.031 c']],
-    pos: v(3400, 1500, 5400), target: v(0, -120, 100), fov: 45,
+    pos: v(2300, 900, 2600), target: v(-100, 60, -700), fov: 40,
   },
   {
     id: 'prow', name: 'Prow & Lance', kicker: 'Forward section', title: 'The Prow',
@@ -23,10 +23,16 @@ export const POIS = [
     pos: v(560, 520, -420), target: v(0, 250, -1450), fov: 45,
   },
   {
+    id: 'heart', name: 'Reactor Heart', kicker: 'Circulatory system', title: 'The Heart',
+    text: 'Sunk into the trench mid-ship, the reactor heart turns inside three gyroscopic containment rings. Arteries of light leave it and run over the decks into the flank channels and out along the pylons: energy you can watch flowing through the whole ship.',
+    stats: [['Core output', '41 TW'], ['Arteries', '20'], ['Pulse speed', '150 m/s'], ['Containment rings', '3']],
+    pos: v(150, 330, 720), target: v(0, 140, 300), fov: 50,
+  },
+  {
     id: 'trench', name: 'Dorsal Trench', kicker: 'Core systems', title: 'The Trench',
     text: 'A three-kilometre canyon cut into the spine exposes the ship’s core: energy conduits pulse forward, maglev pods race between sections, and lit decks line both walls.',
     stats: [['Length', '3.0 km'], ['Depth', 'up to 46 m'], ['Conduits', '5'], ['Gantries', '13']],
-    pos: v(0, 128, 1180), target: v(0, 118, -1300), fov: 55,
+    pos: v(0, 140, 1150), target: v(0, 175, -1500), fov: 52,
   },
   {
     id: 'flank', name: 'Energy Channel', kicker: 'Power distribution', title: 'Flank Channel',
@@ -38,7 +44,7 @@ export const POIS = [
     id: 'bays', name: 'Hangar Bays', kicker: 'Flight operations', title: 'Ventral Hangars',
     text: 'Six bays open from the ventral flanks behind atmosphere-retention fields. Shuttles cycle in and out round the clock, running to the escorts and down to the moon Ilex.',
     stats: [['Bays', '6'], ['Shuttles', '30+ in flight'], ['Bay depth', '16 m field + hangar'], ['Escorts', '4 frigates']],
-    pos: v(700, -560, 220), target: v(150, -110, -330), fov: 48,
+    pos: v(900, -900, 1300), target: v(0, -120, -900), fov: 46,
   },
   {
     id: 'nacelles', name: 'Nacelles', kicker: 'Outboard drives', title: 'Outboard Nacelles',
@@ -50,14 +56,16 @@ export const POIS = [
     id: 'engines', name: 'Engine Array', kicker: 'Propulsion', title: 'Engine Array',
     text: 'Thirteen magnetic-nozzle fusion drives: three main bells, eight auxiliaries and the two nacelle engines. At cruise their plumes run a kilometre and more astern.',
     stats: [['Drives', '13'], ['Main bell Ø', '164 m'], ['Exhaust', '0.08 c'], ['Thrust', '31 MN']],
-    pos: v(1000, -420, -4300), target: v(0, 0, -2500), fov: 48,
+    pos: v(-1400, 1500, -4400), target: v(0, 100, -1300), fov: 40,
   },
 ];
 
 export const LABELS = [
   { text: 'Sensor lance', pos: v(0, 30, 3250) },
   { text: 'Prow blades', pos: v(0, 110, 2300) },
-  { text: 'Dorsal trench', pos: v(0, 170, 400) },
+  { text: 'Dorsal trench', pos: v(0, 190, 900) },
+  { text: 'Reactor heart', pos: v(0, 175, 380) },
+  { text: 'Arteries', pos: v(240, 120, 820) },
   { text: 'Command tower', pos: v(0, 500, -1500) },
   { text: 'Energy channel', pos: v(330, 0, 300) },
   { text: 'Hangar bays', pos: v(250, -150, -330) },
@@ -69,7 +77,7 @@ export const LABELS = [
 export const TOUR = [
   {
     title: 'VESPERA', caption: 'Flagship of the Outer Reach, holding high orbit over the gas giant Aurelis.',
-    from: { pos: v(7600, 3800, 11200), target: v(0, -200, 400) }, to: { pos: v(5200, 2700, 8000), target: v(0, -150, 200) }, dur: 16, fov: 42,
+    from: { pos: v(3600, 1500, 4300), target: v(-100, 60, -700) }, to: { pos: v(2300, 900, 2600), target: v(-100, 60, -700) }, dur: 16, fov: 40,
   },
   {
     title: 'The prow', caption: 'Four kilometres of taper end in a razor prow and a 340-metre sensor lance.',
@@ -78,6 +86,10 @@ export const TOUR = [
   {
     title: 'Dorsal trench', caption: 'A canyon cut into the spine: conduits pulse, maglev pods race between sections, and lit decks line both walls.',
     from: { pos: v(0, 132, 1400), target: v(0, 120, -1000) }, to: { pos: v(0, 160, 300), target: v(0, 170, -1800) }, dur: 16, fov: 55, ease: 'linear',
+  },
+  {
+    title: 'The heart', caption: 'Arteries of light carry the reactor heart’s output over the decks, into the flank channels and out to the nacelles.',
+    from: { pos: v(260, 380, 900), target: v(0, 140, 300) }, to: { pos: v(-160, 300, 640), target: v(0, 140, 340) }, dur: 15, fov: 50,
   },
   {
     title: 'Command tower', caption: 'The bridge looks straight down the length of the ship.',
