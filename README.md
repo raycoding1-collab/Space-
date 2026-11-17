@@ -126,6 +126,19 @@ foundation, with 4.2 million people aboard. VESPERA flies escort to starboard, a
 | ![](screenshots/city/09-engine-wall.jpg) | ![](screenshots/city/10-from-above.jpg) |
 | ![](screenshots/city/11-the-prow.jpg) | ![](screenshots/city/02-vespera-flies-escort.jpg) |
 
+### Up close
+
+Close-ups at 3840 × 2160 (in `screenshots/city/closeups/`):
+
+| | |
+|---|---|
+| ![](screenshots/city/closeups/c01-street-level.jpg) | ![](screenshots/city/closeups/c02-spire-plaza.jpg) |
+| ![](screenshots/city/closeups/c03-crystal-crown.jpg) | ![](screenshots/city/closeups/c04-halo-gardens.jpg) |
+| ![](screenshots/city/closeups/c05-supertall-facade.jpg) | ![](screenshots/city/closeups/c06-rooftops.jpg) |
+| ![](screenshots/city/closeups/c07-holographic-rings.jpg) | ![](screenshots/city/closeups/c08-harbour-pier.jpg) |
+| ![](screenshots/city/closeups/c09-construction-cranes.jpg) | ![](screenshots/city/closeups/c10-undercity-close.jpg) |
+| ![](screenshots/city/closeups/c11-lake-dome-sailboats.jpg) | |
+
 ### The city
 
 - **Keel-Leaf foundation**: an arrowhead deck 32 km long and 12.4 km wide. Its edges step down in three
