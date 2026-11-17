@@ -118,6 +118,13 @@ concepts/                   saved ideas for future versions
 
 ## 4K stills
 
+| | |
+|---|---|
+| ![](screenshots/02-beneath-the-galactic-core.jpg) | ![](screenshots/03-reactor-heart.jpg) |
+| ![](screenshots/04-dorsal-trench.jpg) | ![](screenshots/05-command-tower.jpg) |
+| ![](screenshots/06-hangar-bays.jpg) | ![](screenshots/07-engine-array.jpg) |
+| ![](screenshots/08-from-above.jpg) | ![](screenshots/09-flank-channel.jpg) |
+
 The `screenshots/` folder holds 3840 × 2160 renders from the hero viewpoints. To make your own, press
 `P` in the app. For scripted renders, load `index.html?still&q=ultra` and call
 `window.VESPERA.renderStill(3840, 2160)`, which returns a PNG data URL.
