@@ -28,6 +28,11 @@ Then open <http://localhost:8000> for VESPERA, or <http://localhost:8000/?ship=c
 
 ### The ELYSION website
 
+**Its own address: <https://raycoding1-collab.github.io/Space-/elysion/>** (GitHub Pages; VESPERA is at
+<https://raycoding1-collab.github.io/Space-/>). Pages serves the repository as it is, so the site is always the
+current code. To switch it on once: *Settings → Pages → Build and deployment → Source: Deploy from a branch*,
+pick this branch and `/ (root)`, and save; the site is live a minute later.
+
 `elysion/` is ELYSION's own site, served from the same folder: <http://localhost:8000/elysion/>. It has its
 own name, icons and social preview, can be added to a phone's home screen, and is built for both phones
 and computers:
@@ -42,7 +47,9 @@ and computers:
   can be seen (or whose shadows can be seen) are drawn each frame, and the shadow map is re-rendered only
   when its frame changes.
 
-Any static host works (GitHub Pages, Netlify, an S3 bucket); upload the repository as it is.
+Any static host works. To upload just the site (Netlify drop, an S3 bucket, your own server),
+`tools/build-site.sh` builds a standalone copy with ELYSION at the site root and three.js included into
+`dist/site/`; pass `SITE_URL=https://your.host/` so link previews point at it.
 
 > Opening `index.html` straight from disk (`file://`) won't work, because browsers block ES modules there.
 
