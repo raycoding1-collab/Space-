@@ -167,7 +167,7 @@ void main() {
   float sun = pow(max(dot(R, uSunDirC), 0.0), 1400.0) * 16.0 + pow(max(dot(R, uSunDirC), 0.0), 60.0) * 0.12;
   // fine mullions (spherical coordinates of the shell)
   float ph = atan(vL.x, vL.z) * uMull, th = acos(clamp(normalize(vL - vec3(0.0, -2000.0, 0.0)).y, -1.0, 1.0)) * uMull * 0.8;
-  float m = max(fln(ph, max(fwidth(ph), 1e-4), 0.04), fln(th, max(fwidth(th), 1e-4), 0.04));
+  float m = max(fln(ph, max(fwidth(ph), 1e-4), 0.04), fln(th, max(fwidth(th), 1e-4), 0.04)) * step(0.5, uMull);
   vec3 col = env * F * 1.6 + vec3(sun) * F + uTint * 0.02;
   col = mix(col, uTint * 0.25 + env * 0.05, m * 0.7);
   float a = clamp(F * 0.9 + 0.05 + m * 0.5, 0.0, 1.0);
@@ -192,17 +192,23 @@ void main() {
   ${LOGDEPTH_FRAG}
 }`;
 
+/** Thin reflective glass shell (used by the domes and the canal vault). */
+export function glassShellMat(envTex, { tint = new THREE.Color(0.55, 0.7, 0.8), mull = 0 } = {}) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uCityTime: CITY_U.uCityTime, uSunDirC: CITY_U.uSunDirC, uTint: { value: tint }, uMull: { value: mull }, uEnv: { value: envTex },
+      uHazeC: CITY_U.uHazeC, uHazeR: CITY_U.uHazeR, uHazeK: CITY_U.uHazeK, uHazeFloor: CITY_U.uHazeFloor, uHazeCol: CITY_U.uHazeCol },
+    vertexShader: GLASS_VERT, fragmentShader: GLASS_FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  });
+}
+export { GLASS_VERT, FALL_FRAG };
+
 export function buildDomes(M, ctx, envTex) {
   const root = new THREE.Group();
   root.name = 'domes';
   const B = new ShapeBatch();
   const rng = new RNG(808);
   const lights = new LightSet();
-  const frameMats = {
-    hex: hazed(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.86, 0.86, 0.84), metalness: 0.7, roughness: 0.32 })),
-    meridian: hazed(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.52, 0.37, 0.22), metalness: 0.9, roughness: 0.34 })),
-    diagrid: hazed(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.92, 0.74, 0.44), metalness: 1.0, roughness: 0.28 })),
-  };
+  const frameMats = { hex: M.frameWhite, meridian: M.frameBronze, diagrid: M.frameGold };
   const box = new THREE.BoxGeometry(1, 1, 1);
   const m4 = new THREE.Matrix4();
 

@@ -116,6 +116,7 @@ export function createCityMaterials() {
     wallC: { pat: 0, floorH: 4.2, bay: 3.2, colEvery: 6, mech: 20, litP: 0.4, warm: 0.6, segment: 260, frame: C(0.55, 0.55, 0.56), glass: C(0.06, 0.08, 0.1), ao: 0 },
     spireTower: { pat: 0, floorH: 5.0, bay: 3.6, colEvery: 6, mech: 24, litP: 0.46, warm: 0.62, frame: C(0.86, 0.79, 0.64), glass: C(0.11, 0.1, 0.09), accent: C(0.96, 0.76, 0.44), trim: C(1.0, 0.8, 0.52), roof: C(0.5, 0.46, 0.4), lobby: 0, ao: 0 },
     haloMat: { pat: 5, floorH: 4.0, bay: 3.4, colEvery: 0, mech: 0, litP: 0.55, warm: 0.7, panel: C(0.9, 0.89, 0.86), frame: C(0.9, 0.88, 0.84), glass: C(0.08, 0.09, 0.1), accent: C(0.95, 0.76, 0.46), trim: C(1.0, 0.86, 0.62), ao: 0 },
+    canalHouses: { pat: 2, floorH: 3.6, bay: 3.2, colEvery: 0, mech: 0, litP: 0.6, warm: 0.9, segment: 42, panel: C(0.8, 0.7, 0.56), glass: C(0.05, 0.05, 0.06), ao: 0 },
     terrace: { pat: 5, floorH: 4.0, bay: 3.8, colEvery: 0, mech: 15, litP: 0.48, warm: 0.7, segment: 160, panel: C(0.84, 0.82, 0.78), glass: C(0.06, 0.07, 0.09), ao: 0 },
   };
   M.style = {};
@@ -164,6 +165,9 @@ export function createCityMaterials() {
   M.whitePlain = hazed(new THREE.MeshStandardMaterial({ color: C(0.8, 0.8, 0.78), metalness: 0.3, roughness: 0.5 }));
   M.goldPlain = hazed(new THREE.MeshStandardMaterial({ color: C(0.95, 0.74, 0.44), metalness: 1.0, roughness: 0.3 }));
 
+  M.frameWhite = hazed(new THREE.MeshStandardMaterial({ color: C(0.86, 0.86, 0.84), metalness: 0.7, roughness: 0.32 }));
+  M.frameBronze = hazed(new THREE.MeshStandardMaterial({ color: C(0.52, 0.37, 0.22), metalness: 0.9, roughness: 0.34 }));
+  M.frameGold = hazed(new THREE.MeshStandardMaterial({ color: C(0.92, 0.74, 0.44), metalness: 1.0, roughness: 0.28 }));
   M.foliage = hazed(new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.9, metalness: 0.0 }));
   M.U = CITY_U;
   return M;

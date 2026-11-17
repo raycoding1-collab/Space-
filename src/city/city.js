@@ -6,6 +6,7 @@ import { buildFoundation } from './foundation.js';
 import { buildDistricts } from './districts.js';
 import { buildSpire } from './spire.js';
 import { buildDomes } from './domes.js';
+import { buildCanal } from './canal.js';
 import { GRID, POLAR, SPIRE } from './layout.js';
 import { lightUniforms } from '../ship/lights.js';
 import { conduitTime } from '../ship/conduit.js';
@@ -50,6 +51,8 @@ export async function buildCity({ quality, step, scene }) {
   root.add(buildSpire(M, ctx));
   await step('Sealing the biome domes', 0.7);
   root.add(buildDomes(M, ctx, scene.background));
+  await step('Flooding the Grand Canal', 0.74);
+  root.add(buildCanal(M, ctx, scene.background));
 
   ctx.animated.push((t) => { M.U.uCityTime.value = t; conduitTime.value = t; lightUniforms.uTime.value = t; });
   return {
