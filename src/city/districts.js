@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { RNG, TAU, clamp, smoothstep as sm } from '../lib/rng.js';
 import {
   D, districtAt, halfWidth, blockRect, GRID, PLATEAUS, plateauLevel, polarOf, polarSpokes, POLAR, SPIRE,
-  CANAL, DOMES, DOME_RING, CONSTRUCTION,
+  CANAL, DOMES, DOME_RING, CONSTRUCTION, transitDist,
 } from './layout.js';
 import * as A from './archetypes.js';
 
@@ -44,7 +44,7 @@ const PALETTE = {
 
 /** Geometry/material library with height buckets so a few hundred variants cover the whole city. */
 class Library {
-  constructor(M) { this.M = M; this.geos = new Map(); this.inst = new Map(); this.tris = 0; }
+  constructor(M) { this.M = M; this.geos = new Map(); this.inst = new Map(); this.tris = 0; this.tops = []; }
   variant(name, H, seedIdx) {
     const f = H > 250 ? 1.2 : 1.32;
     const b = Math.round(Math.log(H) / Math.log(f));
@@ -61,6 +61,10 @@ class Library {
     return v;
   }
   add(v, styleName, m4) {
+    // remember the tops of the tallest towers (for aircraft-warning beacons)
+    const sy = m4.elements[5] !== undefined ? Math.hypot(m4.elements[4], m4.elements[5], m4.elements[6]) : 1;
+    const top = v.h * sy;
+    if (top > 480 && m4.elements[5] > 0) this.tops.push([m4.elements[12], m4.elements[13] + top * 1.04, m4.elements[14]]);
     let e = this.inst.get(v.key);
     if (!e) { e = { geo: v.geo, list: [], styles: [] }; this.inst.set(v.key, e); }
     e.list.push(m4.clone());
@@ -193,6 +197,7 @@ export function buildDistricts(M, ctx, blocks) {
           if (s < 0.55) continue;
           s = Math.min(s, rng.range(0.85, 1.08));
           if (!footprintOK(x, z, v.w * s, v.d * s, rot, levelOK)) continue;
+          if (transitDist(x, z) < Math.hypot(v.w, v.d) * s * 0.5 + 40) continue;
           const sy = (H / v.h);
           lib.add(v, pickMat(rng, arch, palette), instMatrix(x, P.h, z, rot, s, sy));
           stats.buildings++;
@@ -258,6 +263,7 @@ function fillBlock(B, dc, lib, rng, spireDist, stats) {
     const pw = x1 - x0 - 2 * m, pd = z1 - z0 - 2 * m;
     if (pw < 20 || pd < 20) continue;
     const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+    if (transitDist(cx, cz) < Math.hypot(pw, pd) * 0.5 + 34) continue;
     const prof = districtProfile(dc, cx, cz, spireDist, rng);
     const v = lib.variant(prof.arch, prof.H, rng.int(0, 1));
     // choose the orientation that fits best

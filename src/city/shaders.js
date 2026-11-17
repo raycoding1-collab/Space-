@@ -135,8 +135,8 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
     pat = sp < 0.3 ? pat : (sp < 0.48 ? 2 : (sp < 0.64 ? 1 : (sp < 0.8 ? 0 : 5)));
     float pc = hashI(vec2(sid, 29.0));
     vec3 pal = pc < 0.25 ? vec3(0.84, 0.8, 0.72) : (pc < 0.45 ? vec3(0.76, 0.68, 0.56) : (pc < 0.62 ? vec3(0.6, 0.58, 0.55) : (pc < 0.78 ? vec3(0.74, 0.58, 0.48) : vec3(0.88, 0.87, 0.85))));
-    panel = mix(uPanel, pal, 0.7);
-    floorH *= mix(0.9, 1.15, hashI(vec2(sid, 41.0)));
+    panel = mix(uPanel, pal, 0.4) * mix(0.94, 1.04, sh);
+    floorH *= mix(0.94, 1.1, hashI(vec2(sid, 41.0)));
     litP *= mix(0.6, 1.3, sh);
   }
   vec2 c = vec2(f.x / bayW, f.y / floorH);

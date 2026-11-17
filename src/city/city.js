@@ -11,6 +11,7 @@ import { buildIndustry } from './industry.js';
 import { buildHarbours } from './harbours.js';
 import { buildUndercity } from './undercity.js';
 import { buildStern } from './stern.js';
+import { buildLife } from './life.js';
 import { GRID, POLAR, SPIRE } from './layout.js';
 import { lightUniforms } from '../ship/lights.js';
 import { conduitTime } from '../ship/conduit.js';
@@ -65,6 +66,8 @@ export async function buildCity({ quality, step, scene }) {
   root.add(buildUndercity(M, ctx));
   await step('Warming the drives', 0.88);
   root.add(buildStern(M, ctx));
+  await step('Waking the city', 0.92);
+  root.add(buildLife(M, ctx, { envTex: scene.background, quality, lib: ctx.lib }));
 
   ctx.animated.push((t) => { M.U.uCityTime.value = t; conduitTime.value = t; lightUniforms.uTime.value = t; });
   return {

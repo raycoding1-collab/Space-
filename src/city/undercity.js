@@ -115,11 +115,11 @@ export function buildUndercity(M, ctx) {
   const cageSegs = [];
   REACTORS.forEach((r, k) => {
     const c = new THREE.Vector3(r.x, r.y, r.z);
-    const mat = new THREE.ShaderMaterial({ uniforms: { uCityTime: CITY_U.uCityTime, uSeed: { value: k * 3.1 }, uGlow: { value: 4.2 } }, vertexShader: SUN_VERT, fragmentShader: SUN_FRAG });
+    const mat = new THREE.ShaderMaterial({ uniforms: { uCityTime: CITY_U.uCityTime, uSeed: { value: k * 3.1 }, uGlow: { value: 1.9 } }, vertexShader: SUN_VERT, fragmentShader: SUN_FRAG });
     const sun = new THREE.Mesh(sunGeo, mat);
     sun.position.copy(c); sun.scale.setScalar(r.R);
     root.add(sun);
-    const halo = new THREE.Mesh(sunGeo, new THREE.ShaderMaterial({ uniforms: { uGlow: { value: 0.9 } }, vertexShader: SUN_VERT, fragmentShader: HALO_FRAG, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide }));
+    const halo = new THREE.Mesh(sunGeo, new THREE.ShaderMaterial({ uniforms: { uGlow: { value: 0.45 } }, vertexShader: SUN_VERT, fragmentShader: HALO_FRAG, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide }));
     halo.position.copy(c); halo.scale.setScalar(r.R * 1.9);
     halo.renderOrder = 2;
     root.add(halo);

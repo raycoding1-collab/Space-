@@ -150,3 +150,54 @@ export function polarOf(x, z) {
 }
 
 export { clamp, sm, lerp };
+
+// ------------------------------------------------------------------ transit network (elevated maglev)
+// Control points [x, y, z]; y is absolute. Districts keep buildings out of these corridors.
+const ringLine = [];
+for (let i = 0; i < 40; i++) {
+  const a = (i / 40) * Math.PI * 2;
+  ringLine.push([Math.sin(a) * 4560, 95, -2760 + Math.cos(a) * 4760]);
+}
+export const TRANSIT = [
+  { name: 'Spine', closed: false, pts: [
+    [480, 70, -14600], [480, 70, -11000], [480, 80, -8300], [470, 220, -7000], [430, 330, -6000], [400, 450, -5100],
+    [420, 580, -4300], [640, 690, -3650], [1030, 700, -2950], [1080, 700, -2300], [700, 690, -1650], [480, 600, -1000],
+    [480, 470, -150], [520, 340, 800], [600, 210, 1650], [900, 90, 2400], [2300, 90, 3300], [2360, 90, 4700],
+    [2250, 90, 6100], [2050, 90, 7800], [2050, 90, 9700], [1650, 90, 11000], [1560, 90, 12100], [1150, 90, 13200], [260, 80, 14000],
+  ] },
+  { name: 'Port', closed: false, pts: [
+    [-480, 70, -14600], [-480, 70, -11000], [-480, 80, -8600], [-1400, 95, -7650], [-2600, 95, -6900],
+  ] },
+  { name: 'Ring', closed: true, pts: ringLine },
+  { name: 'Domes', closed: false, pts: [
+    [-1800, 95, 1700], [-2300, 90, 3300], [-2360, 90, 4700], [-2250, 90, 6100], [-2050, 90, 7800], [-2050, 90, 9700],
+    [-1650, 90, 11000], [-1560, 90, 12100], [-1150, 90, 13200], [-260, 80, 14000],
+  ] },
+  { name: 'Starboard Harbours', closed: false, pts: [[4500, 95, -3600], [5300, 95, -3600], [6000, 90, -3600]] },
+  { name: 'Port Harbours', closed: false, pts: [[-4500, 95, -3600], [-5300, 95, -3600], [-6000, 90, -3600]] },
+  { name: 'Starboard Quays', closed: false, pts: [[4560, 95, 1300], [5300, 95, 1400], [5950, 90, 1400]] },
+  { name: 'Port Quays', closed: false, pts: [[-4560, 95, 1300], [-5300, 95, 1400], [-5950, 90, 1400]] },
+];
+
+let _tSegs = null;
+function transitSegs() {
+  if (_tSegs) return _tSegs;
+  _tSegs = [];
+  for (const r of TRANSIT) {
+    const P = r.pts;
+    const n = r.closed ? P.length : P.length - 1;
+    for (let i = 0; i < n; i++) { const a = P[i], b = P[(i + 1) % P.length]; _tSegs.push([a[0], a[2], b[0], b[2]]); }
+  }
+  return _tSegs;
+}
+/** Horizontal distance from (x, z) to the nearest transit line. */
+export function transitDist(x, z) {
+  let best = 1e9;
+  for (const [ax, az, bx, bz] of transitSegs()) {
+    const dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (L || 1)));
+    const ex = ax + dx * t - x, ez = az + dz * t - z;
+    best = Math.min(best, Math.hypot(ex, ez));
+  }
+  return best;
+}

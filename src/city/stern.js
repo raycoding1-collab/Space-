@@ -98,7 +98,13 @@ export function buildStern(M, ctx) {
         }
         secs.push(pts);
       }
-      B.get(M.vaneMat).loft(secs, Z.METAL, { closed: true, crease: 70 });
+      B.get(M.vaneMat).loft(secs, Z.CLAD, { closed: true, crease: 70, orient: (p) => {
+        // outward from the section's chord line
+        let best = secs[0], bd = 1e18;
+        for (const sc of secs) { const d = Math.abs(sc[0][0] - p[0]); if (d < bd) { bd = d; best = sc; } }
+        let cy = 0, cz = 0; for (const q of best) { cy += q[1] / best.length; cz += q[2] / best.length; }
+        return [0, p[1] - cy, (p[2] - cz) * 0.05];
+      } });
       // glowing leading edge
       const edge = [];
       for (let i = 0; i <= N; i++) {
