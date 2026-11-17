@@ -164,7 +164,7 @@ void main() {
   float F = 0.04 + 0.96 * pow(1.0 - ndv, 5.0);
   vec3 R = reflect(-V, N);
   vec3 env = textureLod(uEnv, R, 0.0).rgb;
-  float sun = pow(max(dot(R, uSunDirC), 0.0), 1400.0) * 16.0 + pow(max(dot(R, uSunDirC), 0.0), 60.0) * 0.12;
+  float sun = (pow(max(dot(R, uSunDirC), 0.0), 1400.0) * 16.0 + pow(max(dot(R, uSunDirC), 0.0), 60.0) * 0.12) * (gl_FrontFacing ? 1.0 : 0.04);
   // fine mullions (spherical coordinates of the shell)
   float ph = atan(vL.x, vL.z) * uMull, th = acos(clamp(normalize(vL - vec3(0.0, -2000.0, 0.0)).y, -1.0, 1.0)) * uMull * 0.8;
   float m = max(fln(ph, max(fwidth(ph), 1e-4), 0.04), fln(th, max(fwidth(th), 1e-4), 0.04)) * step(0.5, uMull);

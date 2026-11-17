@@ -1,6 +1,13 @@
-# VESPERA — Capital Starship
+# VESPERA & ELYSION
 
-A real-time, explorable 3D capital starship rendered in the browser with WebGL (three.js).
+Two real-time, explorable 3D starships rendered in the browser with WebGL (three.js): the capital
+starship **VESPERA** (5.8 km) and **ELYSION**, a 32 km flying city-ship (`?ship=city`), with VESPERA
+flying escort beside it. Switch between them with the **Vespera / Elysion** buttons under the name in
+the top-left corner.
+
+![ELYSION with VESPERA flying escort](screenshots/city/02-vespera-flies-escort.jpg)
+
+## VESPERA — Capital Starship
 
 VESPERA is the flagship of the Outer Reach: a 5.8 km dagger of layered armour, glowing seams and
 machinery, with 86,400 souls aboard. She holds high orbit over the ringed gas giant Aurelis, under a
@@ -17,7 +24,7 @@ desktop browser (Chrome, Edge, Firefox or Safari with WebGL2):
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000>.
+Then open <http://localhost:8000> for VESPERA, or <http://localhost:8000/?ship=city> for ELYSION.
 
 > Opening `index.html` straight from disk (`file://`) won't work, because browsers block ES modules there.
 
@@ -86,6 +93,80 @@ Tour, Orbit and Fly.
   shadows cast between the planet and its rings.
 - **Ilex**: a cratered moon.
 
+## ELYSION — the flying city-ship (`?ship=city`)
+
+A city that flies: thirty-two kilometres of towers, terraces, glass biomes and harbours on a sculpted
+foundation, with 4.2 million people aboard. VESPERA flies escort to starboard, and looks small.
+
+![ELYSION over Aurelis](screenshots/city/01-elysion-over-aurelis.jpg)
+
+| | |
+|---|---|
+| ![](screenshots/city/03-crown-spire.jpg) | ![](screenshots/city/04-spire-district.jpg) |
+| ![](screenshots/city/05-biome-domes.jpg) | ![](screenshots/city/06-inside-the-lake-dome.jpg) |
+| ![](screenshots/city/07-grand-canal.jpg) | ![](screenshots/city/08-undercity-reactor-sun.jpg) |
+| ![](screenshots/city/09-engine-wall.jpg) | ![](screenshots/city/10-from-above.jpg) |
+| ![](screenshots/city/11-the-prow.jpg) | ![](screenshots/city/02-vespera-flies-escort.jpg) |
+
+### The city
+
+- **Keel-Leaf foundation**: an arrowhead deck 32 km long and 12.4 km wide. Its edges step down in three
+  lit city-wall tiers with garden ledges, deep galleries and pilasters, and the ribbed belly converges to
+  a keel 2.4 km below the deck.
+- **Crown Spire**: a 4.6 km hexafoil tower that twists a sixth of a turn as it rises. Gilded ribs run up
+  its lobes and luminous glass bands ring it, with twelve ring sky-terraces. Six buttress fins flare out
+  over the top terrace like roots, with elevator cars racing up their crests. At the top, thirteen
+  crystal shards form the crown, and a beacon pulses on the tallest.
+- **Halo Promenade**: a 3.4 km ring of gardens hanging 2.3 km above the deck on 96 cables from a collar
+  on the spire. It turns slowly.
+- **Spire District**: five terrace plateaus climb toward the spire, laid out with radial avenues and ring
+  streets. Supertall towers reach 1.4 km on the upper terraces.
+- **Districts**: about 15,000 buildings from 21 designed archetypes (blade, twin towers, ziggurat,
+  twisted, needle, crowned cylinder, trifoil, gate, crystal, stacked, courtyard blocks, terraced
+  residences, villas and more) in 51 facade styles. Each district has its own architectural language:
+  the Meridian commercial core, the canal quarter's warm terraced residences, and garden quarters of
+  low courtyard houses and parks.
+- **Biome domes**: the *Lake Dome* (a lake with wooded islands, cliffs and a waterfall under a
+  hex-geodesic frame), the *Forest Dome* (over 20,000 trees climbing a central peak under meridian ribs)
+  and the *Orchard Dome* (twelve concentric crop terraces under a gilded diagrid).
+- **Grand Canal**: 8 km of water under a ribbed, pointed glass vault 460 m high, with canal houses,
+  tree-lined quays, nine bridges of three designs and lantern boats. At its head, the **Cascade** spills
+  from the spire terraces in six falls.
+- **Harbours**: twelve 1.5 km piers on the flanks with terminals, 144 gantry cranes, control towers and
+  sequenced approach lights. Freighters stacked with containers, tankers, liners, haulers and tugs are
+  moored at the berths.
+- **Industrial stern**: cooling towers, refineries, smelters with glowing vents, radiator banks and tank
+  farms. Glowing conduits carry their power aft to the engine wall.
+- **Construction quarter**: unfinished towers in scaffolding, slewing tower cranes and welding arcs.
+- **Undercity**: 1,435 towers hang from the belly like stalactites, lit from below by four caged
+  reactor suns. Launch rails with accelerator rings run along the keel.
+- **Engine wall**: seven colossal drives and twenty-four auxiliaries, with plumes 11 km long. Lift vanes
+  with glowing leading edges sweep out from the flanks.
+- **Prow**: the Lantern observatory and a 1.4 km crystal beacon pointing forward.
+- **Alive**: an elevated maglev network of glass tubes links the spire, the domes, the canal and the
+  harbours, with pods running. Streams of air traffic fly over the rooftops and around the spire.
+  Ferries shuttle between the harbours and VESPERA's hangar bays and head out to the moon Ilex, while
+  drones circle the crown. Windows light up and go dark in runs, beacons blink on the supertall towers,
+  and the Halo turns.
+
+### Detail at every distance
+
+Facades, roofs, streets and hull plating are computed in shaders from each surface's own coordinates:
+floors, bays, mullions, balconies, louvres, diagrids, mechanical floors, lit window runs, paving, lane
+markings and street lamps. Every pattern is box-filtered with `fwidth`, so it is crisp at 50 m and
+settles to its average colour at 30 km instead of shimmering. Buildings are instanced: each instance
+picks its facade style from a style table, so ~15,000 buildings need only a few hundred draw calls. A
+low golden sun, a shadow map that follows the camera's focus, and a faint field-held atmosphere over the
+deck give the city its scale.
+
+### Points of interest
+
+Overview, Crown Spire, The Crown, Halo Promenade, Spire District, Lake Dome, Forest Dome, Orchard Dome,
+Grand Canal, The Cascade, Harbours, Industrial Stern, Construction, Undercity, Engine Wall,
+Prow & Lantern and VESPERA. The guided tour has fourteen shots.
+
+> ELYSION is heavy: about 5 million triangles per pass. On integrated GPUs, use `?ship=city&q=low`.
+
 ## Rendering
 
 - **Lighting**: physically based materials with image-based lighting from the sky and planet, plus a
@@ -112,6 +193,10 @@ src/ship/textures.js        procedural textures
 src/life/traffic.js         shuttles, lanes, pods, drones, welding arcs
 src/post/post.js            HDR post pipeline
 src/ui/                     camera rig (orbit, fly, tour) and HUD
+src/ship/profile.js         VESPERA's profile (UI copy, POIs, camera ranges, shadow coverage, builder)
+src/city/                   ELYSION: master plan (layout.js), shader library (shaders.js), style table
+                            (materials.js), archetypes, districts, foundation, spire, domes, canal,
+                            harbours, industry, undercity, stern, life, POIs and profile
 vendor/three/               three.js r187 (MIT)
 concepts/                   saved ideas for future versions
 ```
@@ -125,6 +210,7 @@ concepts/                   saved ideas for future versions
 | ![](screenshots/06-hangar-bays.jpg) | ![](screenshots/07-engine-array.jpg) |
 | ![](screenshots/08-from-above.jpg) | ![](screenshots/09-flank-channel.jpg) |
 
-The `screenshots/` folder holds 3840 × 2160 renders from the hero viewpoints. To make your own, press
-`P` in the app. For scripted renders, load `index.html?still&q=ultra` and call
-`window.VESPERA.renderStill(3840, 2160)`, which returns a PNG data URL.
+The `screenshots/` folder holds 3840 × 2160 renders from the hero viewpoints (ELYSION's are in
+`screenshots/city/`). To make your own, press `P` in the app. For scripted renders, load
+`index.html?still&q=ultra` (add `&ship=city` for ELYSION) and call `window.VESPERA.renderStill(3840, 2160)`,
+which returns a PNG data URL. See `tools/README.md` for the headless render workflow.

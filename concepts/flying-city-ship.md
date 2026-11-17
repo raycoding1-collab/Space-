@@ -1,6 +1,6 @@
 # ELYSION — The Flying City-Ship (design spec)
 
-> Status: **in production** (`?ship=city`). This document is the blueprint and the build checklist.
+> Status: **built** (`?ship=city`). This document is the blueprint and the build checklist.
 
 ## Pitch
 A city that flies. Not a hull with rooms inside it, but a living metropolis lifted into space on a
@@ -57,22 +57,22 @@ and looks small.
     with pods running; elevator lights; sky-traffic lanes above the rooftops.
 
 ## Build checklist
-- [ ] Engine refactor: `?ship=city` entry, per-ship POIs/tour/intro, ship switcher in the HUD
-- [ ] City shader library: procedural facades (AA), triplanar hull, glass, water, foliage
-- [ ] Foundation (plan shape, tiers, belly, terraces)
-- [ ] Building archetypes + district placement
-- [ ] Crown spire + Halo promenade
-- [ ] Biome domes (lake, forest, orchard)
-- [ ] Grand canal
-- [ ] Harbours with piers, cranes, ships
-- [ ] Industrial stern + construction quarter
-- [ ] Undercity + reactor suns
-- [ ] Engines + lift vanes + prow
-- [ ] Transit network + life (pods, sky traffic, ferries, drones, beacons)
-- [ ] VESPERA escort for scale
-- [ ] POIs, labels, tour
-- [ ] Visual iteration at every zoom level
-- [ ] 4K hero stills in `screenshots/city/`
+- [x] Engine refactor: `?ship=city` entry, per-ship POIs/tour/intro, ship switcher in the HUD
+- [x] City shader library: procedural facades (AA), triplanar hull, glass, water, foliage
+- [x] Foundation (plan shape, tiers, belly, terraces)
+- [x] Building archetypes + district placement
+- [x] Crown spire + Halo promenade
+- [x] Biome domes (lake, forest, orchard)
+- [x] Grand canal
+- [x] Harbours with piers, cranes, ships
+- [x] Industrial stern + construction quarter
+- [x] Undercity + reactor suns
+- [x] Engines + lift vanes + prow
+- [x] Transit network + life (pods, sky traffic, ferries, drones, beacons)
+- [x] VESPERA escort for scale
+- [x] POIs, labels, tour
+- [x] Visual iteration at every zoom level
+- [x] 4K hero stills in `screenshots/city/`
 
 ## Reusable pieces from the first prototype
 The generation-ark prototype (commit `069ac8c`) has self-lit habitat surfaces, instanced buildings with

@@ -24,7 +24,7 @@ export const POIS = [
   },
   {
     id: 'halo', name: 'Halo Promenade', kicker: 'Sky park', title: 'The Halo',
-    text: 'A 3.4 km ring of gardens hanging around the spire 2.3 km above the deck, held on ninety-six cables from a collar high on the tower. It turns once every half hour; its glazed galleries look down on the whole city.',
+    text: 'A 3.4 km ring of gardens hanging around the spire 2.3 km above the deck, held on ninety-six cables from a collar high on the tower. It turns about once every half hour; its glazed galleries look down on the whole city.',
     stats: [['Diameter', '3.4 km'], ['Width', '150 m'], ['Cables', '96'], ['Rotation', '26 min']],
     pos: v(2750, 2530, -650), target: v(0, 2250, -2600), fov: 55,
   },
@@ -43,19 +43,19 @@ export const POIS = [
   {
     id: 'forest', name: 'Forest Dome', kicker: 'Biome II', title: 'The Forest Dome',
     text: 'A dense forest of conifers and broadleaf trees climbs a 540 m peak under meridian ribs. Its summit is bare rock above the treeline.',
-    stats: [['Diameter', '3.2 km'], ['Frame', 'meridian ribs'], ['Trees', '22,000'], ['Peak', '540 m']],
+    stats: [['Diameter', '3.2 km'], ['Frame', 'meridian ribs'], ['Trees', 'over 20,000'], ['Peak', '540 m']],
     pos: v(2500, 1300, 6900), target: v(0, 380, 8800), fov: 55,
   },
   {
     id: 'orchard', name: 'Orchard Dome', kicker: 'Biome III', title: 'The Orchard Dome',
     text: 'Twelve concentric terraces of crops and orchards step up to a glasshouse at the centre, under a gilded diagrid lamella dome.',
-    stats: [['Diameter', '2.3 km'], ['Frame', 'diagrid'], ['Terraces', '12'], ['Orchard trees', '≈ 6,000']],
+    stats: [['Diameter', '2.3 km'], ['Frame', 'gilded diagrid'], ['Terraces', '12'], ['Centre', 'glasshouse']],
     pos: v(1500, 1450, 10100), target: v(0, 100, 12000), fov: 55,
   },
   {
     id: 'canal', name: 'Grand Canal', kicker: 'Aft boulevard', title: 'The Grand Canal',
     text: 'Nine kilometres of water under a ribbed, pointed glass vault. Canal houses line its walls, tree-lined quays run beside the water, bridges of three designs cross it and lantern boats drift along it.',
-    stats: [['Length', '8.1 km of open water'], ['Vault height', '460 m'], ['Bridges', '9'], ['Boats', '46']],
+    stats: [['Length', '8 km'], ['Vault height', '460 m'], ['Bridges', '9'], ['Lantern boats', '46']],
     pos: v(70, 45, -8700), target: v(0, 10, -12500), fov: 60,
   },
   {
@@ -67,31 +67,31 @@ export const POIS = [
   {
     id: 'harbours', name: 'Harbours', kicker: 'Flank piers', title: 'The Harbours',
     text: 'Six piers on each flank reach 1.5 km out from the lowest city wall. Gantry cranes work freighters, tankers, haulers and liners at their berths, and approach lights pulse in toward each pier tip.',
-    stats: [['Piers', '12'], ['Pier length', '1.5 km'], ['Ships at berth', '≈ 60'], ['Gantries', '144']],
+    stats: [['Piers', '12'], ['Pier length', '1.5 km'], ['Ships at berth', '52'], ['Gantry cranes', '144']],
     pos: v(10600, 250, -600), target: v(7600, -620, -3600), fov: 50,
   },
   {
     id: 'industry', name: 'Industrial Stern', kicker: 'Working city', title: 'The Industrial Stern',
     text: 'Cooling towers, refineries, smelters and radiator banks crowd the stern either side of the canal. Glowing conduits carry their heat and power aft to the engine wall.',
-    stats: [['Cooling towers', '≈ 30'], ['Radiator fins', '≈ 300'], ['Conduits', 'to the engine wall']],
+    stats: [['Radiator fins', '408'], ['Plants', 'cooling, refining, smelting'], ['Conduits', 'to the engine wall']],
     pos: v(4300, 950, -10100), target: v(2000, 100, -13800), fov: 55,
   },
   {
     id: 'construction', name: 'Construction', kicker: 'Still growing', title: 'The Construction Quarter',
     text: 'The city is still being built. Towers rise out of their scaffolding, tower cranes slew slowly over the frontier floors, and welding arcs flicker where the next storeys are going up.',
-    stats: [['Sites', '≈ 30'], ['Tower cranes', '≈ 45'], ['Tallest frame', '760 m']],
+    stats: [['Sites', '27'], ['Tower cranes', '41'], ['Tallest frame', '760 m']],
     pos: v(6000, 650, 800), target: v(4000, 380, 3300), fov: 50,
   },
   {
     id: 'undercity', name: 'Undercity', kicker: 'Beneath the keel', title: 'The Undercity',
     text: 'Towers hang from the belly like stalactites, lit from below by four caged reactor suns. Launch rails run the length of the keel, and craft streak along them through the accelerator rings.',
-    stats: [['Hanging towers', '≈ 1,400'], ['Reactor suns', '4'], ['Launch rails', '2 × 21 km']],
+    stats: [['Hanging towers', '1,435'], ['Reactor suns', '4'], ['Launch rails', '2 × 24 km']],
     pos: v(1500, -3450, -3400), target: v(0, -2950, -5600), fov: 60,
   },
   {
     id: 'engines', name: 'Engine Wall', kicker: 'Propulsion', title: 'The Engine Wall',
-    text: 'Seven colossal drives and twenty auxiliaries fill the stern wall. Their plumes run ten kilometres and more astern.',
-    stats: [['Main drives', '7 × 800 m bells'], ['Auxiliaries', '20'], ['Plume length', '11 km']],
+    text: 'Seven colossal drives and twenty-four auxiliaries fill the stern wall. Their plumes run ten kilometres and more astern.',
+    stats: [['Main drives', '7 × 800 m bells'], ['Auxiliaries', '24'], ['Plume length', '11 km']],
     pos: v(-7000, -600, -23000), target: v(0, -1100, -16000), fov: 50,
   },
   {
