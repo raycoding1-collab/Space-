@@ -13,34 +13,34 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 
 const ARCH_MATS = {
   blade: ['spireFins', 'spireGlass', 'spireDark', 'spireRose', 'spireJade'],
-  twin: ['spireGlass', 'spireWhite', 'spireBronze', 'midCurtain'],
-  ziggurat: ['spireBronze', 'spireWhite', 'spireGlass', 'resBalcony'],
+  twin: ['elyNoir', 'elyDeco', 'spireGlass', 'spireWhite', 'spireBronze', 'midCurtain'],
+  ziggurat: ['elyDeco', 'elyNoir', 'spireBronze', 'spireWhite', 'spireGlass', 'resBalcony'],
   twisted: ['spireDiagrid', 'spireGlass', 'spireDark', 'spireRose', 'spireJade'],
   needle: ['spireGlass', 'spireWhite', 'spireFins', 'midCurtain'],
-  crowned: ['spireGlass', 'spireWhite', 'spireBronze', 'midRibbon', 'spireJade', 'midCopper'],
+  crowned: ['elyNoir', 'elyDeco', 'spireGlass', 'spireWhite', 'spireBronze', 'midRibbon', 'spireJade', 'midCopper'],
   trifoil: ['spireFins', 'spireGlass', 'spireWhite'],
   gate: ['spireWhite', 'spireGlass', 'midRibbon'],
   crystal: ['spireDark', 'spireHex', 'spireDiagrid'],
-  stack: ['spireWhite', 'midRibbon', 'midDark', 'resWhite'],
-  cylinders: ['midCurtain', 'spireGlass', 'midFins', 'resHex'],
-  podiumTower: ['midCurtain', 'midFins', 'midDark', 'midRibbon', 'spireGlass', 'midCopper', 'spireJade'],
-  slab: ['midRibbon', 'midPunched', 'midCurtain', 'resBalcony', 'resWhite', 'midTerra', 'resOchre'],
-  roundedBlock: ['midRibbon', 'resWhite', 'midCurtain', 'gardenWhite', 'gardenSage', 'spireWhite'],
-  hexTower: ['resHex', 'resBalcony', 'midFins', 'spireHex', 'resOchre'],
-  terraced: ['resBalcony', 'gardenWhite', 'resWhite', 'gardenStone', 'resOchre', 'gardenSage'],
-  lblock: ['midPunched', 'resPunched', 'gardenStone', 'midRibbon', 'midTerra'],
-  courtyard: ['resPunched', 'midPunched', 'gardenStone', 'resBalcony', 'midTerra', 'resOchre'],
-  villaRow: ['gardenStone', 'gardenTimber', 'gardenWhite', 'gardenSage'],
+  stack: ['elyDeco', 'elyArcade', 'spireWhite', 'midRibbon', 'midDark', 'resWhite'],
+  cylinders: ['elyDeco', 'elyMarble', 'midCurtain', 'spireGlass', 'midFins', 'resHex'],
+  podiumTower: ['elyNoir', 'elyDeco', 'elyArcade', 'midCurtain', 'midFins', 'midDark', 'midRibbon', 'spireGlass', 'midCopper', 'spireJade'],
+  slab: ['elyArcade', 'elyDeco', 'elyArcadeRose', 'elyMarble', 'midRibbon', 'midPunched', 'midCurtain', 'resBalcony', 'resWhite', 'midTerra', 'resOchre'],
+  roundedBlock: ['elyMarble', 'elyArcade', 'elyDeco', 'midRibbon', 'resWhite', 'midCurtain', 'gardenWhite', 'gardenSage', 'spireWhite'],
+  hexTower: ['elyDeco', 'elyArcade', 'resHex', 'resBalcony', 'midFins', 'spireHex', 'resOchre'],
+  terraced: ['elyArcade', 'elyMarble', 'resBalcony', 'gardenWhite', 'resWhite', 'gardenStone', 'resOchre', 'gardenSage'],
+  lblock: ['elyArcade', 'elyArcadeRose', 'elyDeco', 'midPunched', 'resPunched', 'gardenStone', 'midRibbon', 'midTerra'],
+  courtyard: ['elyArcade', 'elyArcadeRose', 'elyMarble', 'resPunched', 'midPunched', 'gardenStone', 'resBalcony', 'midTerra', 'resOchre'],
+  villaRow: ['elyArcade', 'elyMarble', 'elyArcadeRose', 'gardenStone', 'gardenTimber', 'gardenWhite', 'gardenSage'],
   pavilion: ['gardenWhite', 'gardenTimber'],
-  courtyardLow: ['gardenStone', 'gardenTimber', 'gardenWhite', 'resPunched', 'gardenSage', 'resOchre'],
+  courtyardLow: ['elyArcade', 'elyMarble', 'elyArcadeRose', 'gardenStone', 'gardenTimber', 'gardenWhite', 'resPunched', 'gardenSage', 'resOchre'],
 };
 
 const PALETTE = {
-  spireHi: ['spireGlass', 'spireDiagrid', 'spireFins', 'spireDark', 'spireBronze', 'spireWhite', 'spireHex', 'spireJade', 'spireRose'],
-  spireLo: ['midCurtain', 'midRibbon', 'midFins', 'midDark', 'spireGlass', 'spireWhite', 'midPunched', 'spireBronze', 'midCopper', 'spireJade', 'spireRose'],
-  central: ['midCurtain', 'midRibbon', 'midFins', 'midDark', 'midPunched', 'spireGlass', 'midTerra', 'midCopper', 'spireWhite'],
-  canal: ['resBalcony', 'resPunched', 'resHex', 'resWhite', 'midRibbon', 'resOchre', 'midTerra'],
-  garden: ['gardenStone', 'gardenTimber', 'gardenWhite', 'resBalcony', 'resWhite', 'gardenSage', 'resOchre'],
+  spireHi: ['elyNoir', 'spireGlass', 'spireDiagrid', 'spireFins', 'spireDark', 'spireBronze', 'spireWhite', 'spireHex', 'spireJade', 'spireRose'],
+  spireLo: ['elyNoir', 'elyDeco', 'midCurtain', 'midRibbon', 'midFins', 'midDark', 'spireGlass', 'spireWhite', 'midPunched', 'spireBronze', 'midCopper', 'spireJade', 'spireRose'],
+  central: ['elyDeco', 'elyNoir', 'elyArcade', 'elyMarble', 'midCurtain', 'midRibbon', 'midFins', 'midDark', 'midPunched', 'spireGlass', 'midTerra', 'midCopper', 'spireWhite'],
+  canal: ['elyArcade', 'elyArcadeRose', 'elyMarble', 'elyDeco', 'resBalcony', 'resPunched', 'resHex', 'resWhite', 'midRibbon', 'resOchre', 'midTerra'],
+  garden: ['elyArcade', 'elyMarble', 'elyArcadeRose', 'gardenStone', 'gardenTimber', 'gardenWhite', 'resBalcony', 'resWhite', 'gardenSage', 'resOchre'],
 };
 
 /** Geometry/material library with height buckets so a few hundred variants cover the whole city. */
@@ -56,7 +56,7 @@ class Library {
       const rng = new RNG(1000 + seedIdx * 7919 + b * 131 + name.length * 17);
       const fn = A[name];
       const r = fn(rng, Hb);
-      v = { geo: r.shape.toGeometry(), w: r.w, d: r.d, h: Hb, key, tris: r.shape.triCount };
+      v = { geo: r.shape.toGeometry(), w: r.w, d: r.d, h: Hb, key, tris: r.shape.triCount, flat: r.flat !== false };
       this.geos.set(key, v);
     }
     return v;
@@ -68,7 +68,7 @@ class Library {
     if (top > 480 && m4.elements[5] > 0) this.tops.push([m4.elements[12], m4.elements[13] + top * 1.04, m4.elements[14]]);
     if (m4.elements[5] > 0) {
       const e = m4.elements, sc = Math.hypot(e[0], e[1], e[2]);
-      this.placed.push({ arch: v.key.split('|')[0], x: e[12], y: e[13], z: e[14], rot: Math.atan2(-e[2], e[0]), s: sc, top, w: v.w * sc, d: v.d * sc, style: styleName });
+      this.placed.push({ arch: v.key.split('|')[0], x: e[12], y: e[13], z: e[14], rot: Math.atan2(-e[2], e[0]), s: sc, top, w: v.w * sc, d: v.d * sc, style: styleName, flat: v.flat !== false });
     }
     let e = this.inst.get(v.key);
     if (!e) { e = { geo: v.geo, list: [], styles: [] }; this.inst.set(v.key, e); }

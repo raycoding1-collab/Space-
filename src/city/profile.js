@@ -23,7 +23,9 @@ export const PROFILE = {
   tour: TOUR,
   labelFade: 90000,
   // a lower, warmer sun than VESPERA's: side light and long shadows across the districts
-  world: { sunDir: new THREE.Vector3(0.82, 0.45, 0.35), sunColor: new THREE.Color(1.0, 0.9, 0.78), sunIntensity: 3.6 },
+  world: { sunDir: new THREE.Vector3(0.82, 0.45, 0.35), sunColor: new THREE.Color(1.0, 0.9, 0.78), sunIntensity: 3.1 },
+  // grading: a touch more colour so stone, rose-gold and verdigris read instead of clipping to white
+  post: { uSaturation: 1.18, uExposure: 0.95 },
   near: 1.0,
   rig: { maxDistance: 260000, minDistance: 20, flySpeed: 600, flyMax: 40000, arc: 'up', belowY: -900, halfBeam: 6200 },
   shadow: {

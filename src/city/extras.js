@@ -262,7 +262,7 @@ function buildSignage(root, placed, rng) {
       const h = Math.min(P.top * 0.6, rng.range(22, 70));
       const y0 = P.y + rng.range(6, Math.max(7, P.top - h - 4));
       banners.push([wx, y0 + h / 2, wz, heading, h, rng.next()]);
-    } else if (FLAT.has(P.arch) && r > 0.86 && P.top < 260) {
+    } else if (FLAT.has(P.arch) && P.flat !== false && r > 0.86 && P.top < 260) {
       boards.push([P.x, P.y + P.top + 9, P.z, P.rot + rng.range(-0.3, 0.3), rng.range(18, 34), rng.next()]);
     }
   }
@@ -323,7 +323,7 @@ function buildRooftops(root, M, placed, rng) {
   pad.prism(rect(5, 1.4), 0.5, 0.6, Z.TRIM, Z.TRIM);
   const pads = [], cars = [];
   for (const P of placed) {
-    if (!FLAT.has(P.arch) || P.top < 50 || P.w < 34 || P.d < 34) continue;
+    if (!FLAT.has(P.arch) || P.flat === false || P.top < 50 || P.w < 34 || P.d < 34) continue;
     if (!rng.chance(0.4)) continue;
     const c = Math.cos(P.rot), s = Math.sin(P.rot);
     const ox = rng.range(-0.18, 0.18) * P.w, oz = rng.range(-0.18, 0.18) * P.d;

@@ -1,7 +1,7 @@
 // Building archetypes. Each one is a designed silhouette (setbacks, chamfers, fins, crowns) built at
 // real scale with zoned surfaces: the facade shader turns the zones into curtain walls, podiums,
 // cladding, roofs, gilded crowns, lit trims and gardens. Base at y = 0, centred on the origin.
-import { Shape, Z, rect, chamfer, rounded, circle, regular, movePoly, rotPoly } from './geo.js';
+import { Shape, Z, rect, chamfer, rounded, circle, regular, movePoly, rotPoly, ccw, offsetPoly } from './geo.js';
 import { TAU } from '../lib/rng.js';
 
 // ------------------------------------------------------------------ small parts
@@ -31,6 +31,65 @@ function trimBand(sh, poly, y, h = 1.2, out = 0.4) {
 function spire(sh, x, z, y, h, r) {
   sh.cone(x, z, r, r * 0.05, y, y + h, Z.METAL, 8);
   sh.prism(rect(r * 0.5, r * 0.5, x, z), y + h * 0.985, y + h * 1.01, Z.TRIM, Z.TRIM);
+}
+
+// ------------------------------------------------------------------ the ELYSION vernacular
+// Signatures that recur across the whole city and make it one place rather than a generic skyline:
+// gilded corner ribs that climb past the roofline into lit finials; glowing lantern crowns with
+// cupolas; patinated copper mansards with rows of lit dormers; recessed sky-garden storeys.
+function centroid(poly) {
+  let cx = 0, cz = 0;
+  for (const [x, z] of poly) { cx += x / poly.length; cz += z / poly.length; }
+  return [cx, cz];
+}
+function ribs(sh, poly, y0, y1, { r = 0.8, every = 1, over = 5, light = true } = {}) {
+  const p = ccw(poly), [cx, cz] = centroid(p);
+  for (let i = 0; i < p.length; i += every) {
+    const [x, z] = p[i], dx = x - cx, dz = z - cz, l = Math.hypot(dx, dz) || 1;
+    const px = x + (dx / l) * r * 0.5, pz = z + (dz / l) * r * 0.5;
+    const sq = movePoly(rotPoly(rect(r * 1.3, r * 1.3), Math.atan2(dz, dx) + Math.PI / 4), px, pz);
+    const top = y1 + over;
+    sh.prism(sq, y0, top, Z.METAL, Z.METAL);
+    sh.cone(px, pz, r * 0.8, 0.04, top, top + r * 6, Z.METAL, 4);
+    if (light) sh.prism(rect(r * 0.4, r * 0.4, px, pz), top + r * 5.6, top + r * 6.3, Z.TRIM, Z.TRIM);
+  }
+}
+function lantern(sh, rng, x, z, y, r) {
+  const n = rng.pick([6, 8, 8, 12]);
+  const h = r * rng.range(1.1, 1.6);
+  sh.prism(regular(n, r * 1.25, 0, x, z), y, y + 1.4, Z.STONE, Z.ROOF);
+  sh.walls(regular(n, r * 1.31, 0, x, z), y + 1.4, y + 2.0, Z.TRIM);
+  const y1 = y + 2.0, y2 = y1 + h;
+  sh.prism(regular(n, r, 0, x, z), y1, y2, Z.LANTERN, null);
+  const k = 0.45 + r * 0.05;
+  for (const [px, pz] of regular(n, r * 1.02, 0, x, z)) sh.prism(rect(k, k, px, pz), y1, y2 + 0.3, Z.METAL, Z.METAL);
+  sh.prism(regular(n, r * 1.14, 0, x, z), y2, y2 + 0.9, Z.METAL, null);
+  const yd = y2 + 0.9;
+  sh.cone(x, z, r * 1.08, r * 0.3, yd, yd + r * 0.8, Z.METAL, n * 2);
+  sh.cone(x, z, r * 0.3, 0.05, yd + r * 0.8, yd + r * 2.6, Z.METAL, 6);
+  sh.prism(rect(0.5, 0.5, x, z), yd + r * 2.5, yd + r * 2.6 + 0.6, Z.TRIM, Z.TRIM);
+  return yd + r * 2.6;
+}
+function mansard(sh, poly, y, h = 5.5, inset = 3.4) {
+  const a = ccw(poly), b = offsetPoly(a, -inset);
+  sh.loft([a.map(([x, z]) => [x, y, z]), b.map(([x, z]) => [x, y + h, z])], Z.COPPER, { crease: 30, vFn: (q) => q[1] - y });
+  sh.cap(b, y + h, Z.ROOF);
+  sh.walls(offsetPoly(b, 0.2), y + h, y + h + 0.6, Z.METAL);
+  return y + h;
+}
+/** A copper mansard around a courtyard: outer slope in, inner slope out. */
+function mansardRing(sh, outer, inner, y, h = 5.0, inset = 3.0) {
+  const a = ccw(outer), b = offsetPoly(a, -inset);
+  const ai = ccw(inner), bi = offsetPoly(ai, inset);
+  sh.loft([a.map(([x, z]) => [x, y, z]), b.map(([x, z]) => [x, y + h, z])], Z.COPPER, { crease: 30, vFn: (q) => q[1] - y });
+  sh.loft([ai.map(([x, z]) => [x, y, z]), bi.map(([x, z]) => [x, y + h, z])], Z.COPPER, { crease: 30, vFn: (q) => q[1] - y, orient: (p) => [-p[0], 0, -p[2]] });
+  sh.cap(b, y + h, Z.ROOF, { holes: [bi] });
+}
+/** Tower body with a recessed, glazed sky-garden storey part-way up (gardens on the ledge). */
+function notchedBody(sh, poly, y0, y1, yN, zone = Z.FACADE, depth = 3.5, gap = 7) {
+  sh.prism(poly, y0, yN, zone, Z.GARDEN);
+  sh.prism(offsetPoly(ccw(poly), -depth), yN, yN + gap, Z.GLASS, null);
+  sh.prism(poly, yN + gap, y1, zone, Z.ROOF);
 }
 
 // ------------------------------------------------------------------ mega-towers (spire district)
@@ -226,6 +285,7 @@ export function stack(rng, H) {
     maxW = Math.max(maxW, w + 2 * Math.abs(ox)); maxD = Math.max(maxD, d + 2 * Math.abs(oz));
     y += lh;
   }
+  if (rng.chance(0.6)) { lantern(sh, rng, 0, 0, y, rng.range(7, 10)); return { shape: sh, w: maxW, d: maxD, h: H, flat: false }; }
   roofKit(sh, rng, 40, 30, y);
   return { shape: sh, w: maxW, d: maxD, h: H };
 }
@@ -239,9 +299,16 @@ export function cylinders(rng, H) {
     const [x, z] = pos[k];
     sh.prism(circle(rs[k], 24, x, z), 0, hs[k], Z.FACADE, Z.ROOF);
     trimBand(sh, circle(rs[k], 24).map(([a, b]) => [a + x, b + z]), hs[k] - 3, 1.2, 0.3);
+    if (k > 0 && rng.chance(0.7)) lantern(sh, rng, x, z, hs[k], rs[k] * 0.42);
+    else if (k > 0) ribs(sh, circle(rs[k], 8, x, z), hs[k] * 0.4, hs[k], { every: 2, r: 0.8, over: 4 });
   }
-  mast(sh, 0, 0, H, H * 0.15, 2);
-  return { shape: sh, w: rs[0] * 2 + rs[1] * 2.2, d: rs[0] * 2 + rs[2] * 1.6, h: H };
+  if (rng.chance(0.6)) {
+    const r2 = rs[0] * 0.72;
+    sh.prism(circle(r2, 24), H, H + 10, Z.FACADE, Z.ROOF);
+    trimBand(sh, circle(r2, 24), H + 9, 0.8, 0.2);
+    lantern(sh, rng, 0, 0, H + 10, r2 * 0.5);
+  } else mast(sh, 0, 0, H, H * 0.15, 2);
+  return { shape: sh, w: rs[0] * 2 + rs[1] * 2.2, d: rs[0] * 2 + rs[2] * 1.6, h: H, flat: false };
 }
 
 // ------------------------------------------------------------------ mid-rise
@@ -251,9 +318,25 @@ export function podiumTower(rng, H) {
   sh.prism(rect(pw, pd), 0, ph, Z.PODIUM, Z.GARDEN);
   const s = rng.range(28, 40), ox = rng.range(-1, 1) * (pw - s) * 0.3, oz = rng.range(-1, 1) * (pd - s) * 0.3;
   const p = movePoly(chamfer(s, s * rng.range(0.8, 1.1), s * 0.15), ox, oz);
-  sh.prism(p, ph, H, Z.FACADE, Z.ROOF);
+  // deco setbacks: the top of the tower steps in two or three times, each ledge a garden terrace
+  const steps = H - ph > 50 && rng.chance(0.65) ? rng.int(2, 3) : 0;
+  const sH = (H - ph) * rng.range(0.06, 0.09), bodyTop = H - steps * sH;
+  if (bodyTop - ph > 70 && rng.chance(0.55)) notchedBody(sh, p, ph, bodyTop, ph + (bodyTop - ph) * rng.range(0.5, 0.72));
+  else sh.prism(p, ph, bodyTop, Z.FACADE, steps ? Z.GARDEN : Z.ROOF);
+  let poly = p;
+  for (let k = 0; k < steps; k++) {
+    poly = offsetPoly(ccw(poly), -s * rng.range(0.07, 0.1));
+    const y0 = bodyTop + k * sH;
+    sh.prism(poly, y0, y0 + sH, Z.FACADE, k === steps - 1 ? Z.ROOF : Z.GARDEN);
+    trimBand(sh, poly, y0 + sH - 1.0, 0.8, 0.2);
+  }
+  if (!steps) trimBand(sh, chamfer(s, s, s * 0.15).map(([a, b]) => [a + ox, b + oz]), H - 1.2, 1.0, 0.2);
+  if (rng.chance(0.75)) ribs(sh, p, ph, bodyTop, { every: 2, r: 0.9, over: steps ? sH * 0.6 : 5 });
+  if (rng.chance(0.6)) {
+    lantern(sh, rng, ox, oz, H, s * rng.range(0.15, 0.2));
+    return { shape: sh, w: pw, d: pd, h: H, flat: false };
+  }
   sh.prism(movePoly(chamfer(s * 0.7, s * 0.6, s * 0.1), ox, oz), H, H + 9, Z.CLAD, Z.ROOF);
-  trimBand(sh, chamfer(s, s, s * 0.15).map(([a, b]) => [a + ox, b + oz]), H - 1.2, 1.0, 0.2);
   if (rng.chance(0.6)) mast(sh, ox, oz, H + 9, rng.range(10, 30), 1.2);
   return { shape: sh, w: pw, d: pd, h: H };
 }
@@ -263,6 +346,12 @@ export function slab(rng, H) {
   const w = rng.range(66, 100), d = rng.range(18, 26);
   sh.prism(chamfer(w, d, 4), 0, H, Z.FACADE, Z.ROOF);
   trimBand(sh, chamfer(w, d, 4), H - 1.2, 1.0, 0.2);
+  if (rng.chance(0.5)) ribs(sh, chamfer(w, d, 4), 0, H, { every: 2, r: 0.8, over: rng.range(3, 7) });
+  if (rng.chance(0.6)) {
+    const yt = mansard(sh, chamfer(w, d, 4), H, rng.range(5, 6.5), 3.4);
+    if (rng.chance(0.4)) lantern(sh, rng, rng.range(-0.25, 0.25) * w, 0, yt, Math.min(d * 0.22, 5.5));
+    return { shape: sh, w, d, h: H, flat: false };
+  }
   roofKit(sh, rng, w * 0.6, d * 0.6, H);
   return { shape: sh, w, d, h: H };
 }
@@ -272,6 +361,10 @@ export function roundedBlock(rng, H) {
   const w = rng.range(48, 72), d = rng.range(34, 50), r = rng.range(8, 14);
   sh.prism(rounded(w, d, r, 4), 0, H - 7, Z.FACADE, Z.GARDEN);
   sh.prism(rounded(w - 14, d - 12, r * 0.6, 3), H - 7, H, Z.GLASS, Z.ROOF);
+  if (rng.chance(0.5)) {
+    lantern(sh, rng, 0, 0, H, Math.min(w, d) * 0.14);
+    return { shape: sh, w, d, h: H, flat: false };
+  }
   roofKit(sh, rng, w * 0.5, d * 0.5, H);
   return { shape: sh, w, d, h: H };
 }
@@ -282,6 +375,11 @@ export function hexTower(rng, H) {
   sh.prism(regular(6, r * 1.5), 0, 10, Z.PODIUM, Z.GARDEN);
   sh.prism(regular(6, r), 8, H, Z.FACADE, Z.GARDEN);
   sh.prism(regular(6, r + 1.5), H, H + 2, Z.METAL, Z.METAL);
+  ribs(sh, regular(6, r), 10, H, { r: 0.8, over: 4 });
+  if (rng.chance(0.65)) {
+    lantern(sh, rng, 0, 0, H + 2, r * 0.42);
+    return { shape: sh, w: r * 3, d: r * 3, h: H, flat: false };
+  }
   sh.prism(regular(6, r * 0.45), H, H + 8, Z.CLAD, Z.ROOF);
   return { shape: sh, w: r * 3, d: r * 3, h: H };
 }
@@ -289,13 +387,14 @@ export function hexTower(rng, H) {
 export function terraced(rng, H) {
   const sh = new Shape();
   const w = rng.range(60, 96), d = rng.range(40, 60);
-  const n = rng.int(4, 6);
+  const n = rng.int(4, 6), cop = rng.chance(0.5);
   for (let k = 0; k < n; k++) {
     const dk = d * (1 - k * 0.14);
     const y0 = (H * k) / n, y1 = (H * (k + 1)) / n;
-    sh.prism(rect(w - k * 4, dk, 0, -(d - dk) / 2), y0, y1, Z.FACADE, Z.GARDEN);
+    sh.prism(rect(w - k * 4, dk, 0, -(d - dk) / 2), y0, y1, Z.FACADE, k === n - 1 && cop ? null : Z.GARDEN);
+    if (k === n - 1 && cop) mansard(sh, rect(w - k * 4, dk, 0, -(d - dk) / 2), y1, 4.5, 2.6);
   }
-  return { shape: sh, w, d, h: H };
+  return { shape: sh, w, d, h: H, flat: !cop };
 }
 
 export function lblock(rng, H) {
@@ -303,6 +402,11 @@ export function lblock(rng, H) {
   const w = rng.range(60, 90), d = rng.range(60, 90), t = rng.range(18, 26);
   sh.prism(rect(w, t, 0, -d / 2 + t / 2), 0, H, Z.FACADE, Z.ROOF);
   sh.prism(rect(t, d - t, -w / 2 + t / 2, t / 2), 0, H * rng.range(0.7, 1.0), Z.FACADE, Z.GARDEN);
+  if (rng.chance(0.55)) {
+    mansard(sh, rect(w, t, 0, -d / 2 + t / 2), H, 5, 3);
+    ribs(sh, rect(w, t, 0, -d / 2 + t / 2), 0, H, { r: 0.7, over: 3 });
+    return { shape: sh, w, d, h: H, flat: false };
+  }
   roofKit(sh, rng, w * 0.5, t * 0.6, H);
   return { shape: sh, w, d, h: H };
 }
@@ -313,10 +417,13 @@ export function courtyard(rng, H) {
   const outer = chamfer(w, d, rng.range(2, 10)), inner = rect(w - 2 * t, d - 2 * t);
   sh.walls(outer, 0, H, Z.FACADE);
   sh.loft([inner.map(([x, z]) => [x, 0, z]), inner.map(([x, z]) => [x, H, z])], Z.FACADE, { crease: 40, orient: (p) => [-p[0], 0, -p[2]] });
-  sh.cap(outer, H, Z.ROOF, { holes: [inner] });
+  const copper = rng.chance(0.6);
+  if (copper) mansardRing(sh, outer, inner, H, 5.5, 3.2);
+  else sh.cap(outer, H, Z.ROOF, { holes: [inner] });
   sh.cap(inner, 0.6, Z.GARDEN);
   trimBand(sh, outer, H - 1.0, 0.8, 0.2);
-  return { shape: sh, w, d, h: H };
+  if (copper) ribs(sh, outer, 0, H, { every: 1, r: 0.8, over: 4 });
+  return { shape: sh, w, d, h: H, flat: !copper };
 }
 
 // ------------------------------------------------------------------ low-rise (garden quarters)
@@ -326,8 +433,14 @@ export function villaRow(rng, H) {
   for (let k = 0; k < n; k++) {
     const h = H * rng.range(0.7, 1.0);
     const x = (k - (n - 1) / 2) * uw;
-    sh.prism(rect(uw - 0.6, ud, x, rng.range(-2, 2)), 0, h, Z.FACADE, Z.GARDEN);
-    sh.prism(rect(uw * 0.5, ud * 0.4, x, -ud * 0.2), h, h + 3, Z.GLASS, Z.ROOF);
+    const zo = rng.range(-2, 2);
+    if (rng.chance(0.5)) {
+      sh.prism(rect(uw - 0.6, ud, x, zo), 0, h, Z.FACADE, null);
+      mansard(sh, rect(uw - 0.6, ud, x, zo), h, 4, 2.4);
+    } else {
+      sh.prism(rect(uw - 0.6, ud, x, zo), 0, h, Z.FACADE, Z.GARDEN);
+      sh.prism(rect(uw * 0.5, ud * 0.4, x, -ud * 0.2), h, h + 3, Z.GLASS, Z.ROOF);
+    }
   }
   return { shape: sh, w: n * uw, d: ud + 4, h: H };
 }
@@ -348,7 +461,8 @@ export function courtyardLow(rng, H) {
   const outer = rect(w, d), inner = rect(w - 2 * t, d - 2 * t);
   sh.walls(outer, 0, H, Z.FACADE);
   sh.loft([inner.map(([x, z]) => [x, 0, z]), inner.map(([x, z]) => [x, H, z])], Z.FACADE, { crease: 40, orient: (p) => [-p[0], 0, -p[2]] });
-  sh.cap(outer, H, Z.GARDEN, { holes: [inner] });
+  if (rng.chance(0.55)) mansardRing(sh, outer, inner, H, 4.5, 2.8);
+  else sh.cap(outer, H, Z.GARDEN, { holes: [inner] });
   sh.cap(inner, 0.6, Z.GARDEN);
   return { shape: sh, w, d, h: H };
 }

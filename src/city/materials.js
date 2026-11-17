@@ -96,6 +96,12 @@ export function createCityMaterials() {
     midDark: { pat: 7, floorH: 4.0, bay: 3.2, colEvery: 5, mech: 12, litP: 0.35, warm: 0.4, frame: C(0.17, 0.18, 0.19), glass: C(0.04, 0.05, 0.06), accent: C(0.28, 0.29, 0.3), roof: C(0.14, 0.14, 0.15), lobby: 8 },
     midTerra: { pat: 2, floorH: 3.7, bay: 3.2, colEvery: 0, mech: 0, litP: 0.48, warm: 0.85, panel: C(0.68, 0.42, 0.30), glass: C(0.05, 0.05, 0.05), roof: C(0.29, 0.19, 0.14), lobby: 5 },
     midCopper: { pat: 7, floorH: 4.0, bay: 3.0, colEvery: 0, mech: 15, litP: 0.4, warm: 0.7, frame: C(0.55, 0.36, 0.24), glass: C(0.07, 0.07, 0.07), accent: C(0.7, 0.45, 0.3), roof: C(0.22, 0.30, 0.27), lobby: 7 },
+    // The Elysian orders: the city's own architecture, found in every district
+    elyArcade: { pat: 8, floorH: 4.4, bay: 3.8, colEvery: 0, mech: 0, litP: 0.52, warm: 0.88, panel: C(0.84, 0.76, 0.62), frame: C(0.84, 0.76, 0.62), glass: C(0.05, 0.05, 0.06), accent: C(0.93, 0.74, 0.42), roof: C(0.26, 0.24, 0.21), lobby: 6 },
+    elyArcadeRose: { pat: 8, floorH: 4.2, bay: 3.6, colEvery: 0, mech: 0, litP: 0.55, warm: 0.9, panel: C(0.78, 0.6, 0.52), frame: C(0.78, 0.6, 0.52), glass: C(0.05, 0.05, 0.06), accent: C(0.92, 0.86, 0.76), roof: C(0.28, 0.22, 0.2), lobby: 5 },
+    elyMarble: { pat: 8, floorH: 4.6, bay: 4.2, colEvery: 0, mech: 0, litP: 0.5, warm: 0.8, panel: C(0.89, 0.88, 0.85), frame: C(0.89, 0.88, 0.85), glass: C(0.05, 0.06, 0.07), accent: C(0.36, 0.62, 0.54), roof: C(0.3, 0.3, 0.29), lobby: 7 },
+    elyDeco: { pat: 9, floorH: 4.0, bay: 3.2, colEvery: 0, mech: 18, litP: 0.46, warm: 0.75, panel: C(0.86, 0.82, 0.74), frame: C(0.86, 0.82, 0.74), glass: C(0.06, 0.06, 0.07), accent: C(0.88, 0.66, 0.36), roof: C(0.3, 0.28, 0.25), lobby: 9 },
+    elyNoir: { pat: 9, floorH: 4.2, bay: 3.0, colEvery: 0, mech: 20, litP: 0.42, warm: 0.7, panel: C(0.11, 0.11, 0.12), frame: C(0.11, 0.11, 0.12), glass: C(0.04, 0.04, 0.05), accent: C(0.95, 0.74, 0.4), roof: C(0.12, 0.12, 0.12), trim: C(1.0, 0.78, 0.45), lobby: 10 },
     // Canal quarter: warm terraced residences
     resBalcony: { pat: 5, floorH: 3.4, bay: 3.6, colEvery: 0, mech: 0, litP: 0.55, warm: 0.85, panel: C(0.86, 0.80, 0.70), glass: C(0.06, 0.06, 0.07), roof: C(0.24, 0.26, 0.22), lobby: 4 },
     resPunched: { pat: 2, floorH: 3.3, bay: 3.2, colEvery: 0, mech: 0, litP: 0.55, warm: 0.9, panel: C(0.80, 0.62, 0.42), glass: C(0.05, 0.05, 0.06), roof: C(0.33, 0.22, 0.16), lobby: 4 },
@@ -112,7 +118,7 @@ export function createCityMaterials() {
     industryLight: { pat: 1, floorH: 7.0, bay: 5.0, colEvery: 0, mech: 0, litP: 0.3, warm: 0.4, panel: C(0.6, 0.6, 0.58), glass: C(0.06, 0.07, 0.08), roof: C(0.3, 0.3, 0.3), accent: C(0.65, 0.66, 0.68) },
     // City walls (terrace tiers of the foundation): long lit walls, each stretch a different building
     wallA: { pat: 5, floorH: 4.0, bay: 4.0, colEvery: 0, mech: 18, litP: 0.42, warm: 0.75, segment: 180, panel: C(0.78, 0.75, 0.7), glass: C(0.06, 0.07, 0.08), ao: 0 },
-    wallB: { pat: 2, floorH: 4.0, bay: 3.6, colEvery: 0, mech: 16, litP: 0.45, warm: 0.8, segment: 220, panel: C(0.7, 0.67, 0.62), glass: C(0.05, 0.05, 0.06), ao: 0 },
+    wallB: { pat: 9, floorH: 4.0, bay: 3.6, colEvery: 0, mech: 16, litP: 0.45, warm: 0.8, segment: 220, panel: C(0.7, 0.67, 0.62), glass: C(0.05, 0.05, 0.06), ao: 0 },
     wallC: { pat: 0, floorH: 4.2, bay: 3.2, colEvery: 6, mech: 20, litP: 0.4, warm: 0.6, segment: 260, frame: C(0.55, 0.55, 0.56), glass: C(0.06, 0.08, 0.1), ao: 0 },
     spireTower: { pat: 0, floorH: 5.0, bay: 3.6, colEvery: 6, mech: 24, litP: 0.46, warm: 0.62, frame: C(0.86, 0.79, 0.64), glass: C(0.11, 0.1, 0.09), accent: C(0.96, 0.76, 0.44), trim: C(1.0, 0.8, 0.52), roof: C(0.36, 0.33, 0.29), lobby: 0, ao: 0 },
     haloMat: { pat: 5, floorH: 4.0, bay: 3.4, colEvery: 0, mech: 0, litP: 0.55, warm: 0.7, panel: C(0.9, 0.89, 0.86), frame: C(0.9, 0.88, 0.84), glass: C(0.08, 0.09, 0.1), accent: C(0.95, 0.76, 0.46), trim: C(1.0, 0.86, 0.62), ao: 0 },
@@ -129,7 +135,7 @@ export function createCityMaterials() {
     lantern: { pat: 5, floorH: 4.2, bay: 3.4, colEvery: 0, mech: 0, litP: 0.7, warm: 0.8, panel: C(0.9, 0.88, 0.84), frame: C(0.9, 0.88, 0.84), glass: C(0.08, 0.08, 0.09), accent: C(0.95, 0.76, 0.46), trim: C(1.0, 0.82, 0.55), ao: 0 },
     engineHousing: { pat: 2, floorH: 6.0, bay: 6.0, colEvery: 0, mech: 0, litP: 0.2, warm: 0.4, panel: C(0.22, 0.22, 0.23), accent: C(0.36, 0.37, 0.39), glass: C(0.04, 0.04, 0.05), roof: C(0.2, 0.2, 0.21), trim: C(0.45, 0.8, 1.0), trimI: 3.0, ao: 0 },
     vaneMat: { pat: 2, floorH: 6.0, bay: 6.0, colEvery: 0, mech: 0, litP: 0.1, warm: 0.4, panel: C(0.2, 0.18, 0.16), accent: C(0.42, 0.32, 0.22), glass: C(0.04, 0.04, 0.05), roof: C(0.2, 0.2, 0.21), trim: C(0.6, 0.88, 1.0), trimI: 3.4, ao: 0 },
-    canalHouses: { pat: 2, floorH: 3.6, bay: 3.2, colEvery: 0, mech: 0, litP: 0.6, warm: 0.9, segment: 42, panel: C(0.8, 0.7, 0.56), glass: C(0.05, 0.05, 0.06), ao: 0 },
+    canalHouses: { pat: 8, floorH: 3.6, bay: 3.2, colEvery: 0, mech: 0, litP: 0.6, warm: 0.9, segment: 42, panel: C(0.8, 0.7, 0.56), glass: C(0.05, 0.05, 0.06), ao: 0 },
     terrace: { pat: 5, floorH: 4.0, bay: 3.8, colEvery: 0, mech: 15, litP: 0.48, warm: 0.7, segment: 160, panel: C(0.84, 0.82, 0.78), glass: C(0.06, 0.07, 0.09), ao: 0 },
   };
   M.style = {};

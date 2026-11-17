@@ -147,6 +147,8 @@ async function init() {
 
   // ---------------------------------------------------------------- post & controls
   const post = new PostFX(renderer, { samples: quality.samples });
+  // per-ship grading (exposure, saturation, vignette…)
+  for (const [k, v] of Object.entries(PROFILE.post || {})) if (post.finalMat.uniforms[k]) post.finalMat.uniforms[k].value = v;
   const rig = new CameraRig(camera, canvas, PROFILE.rig);
 
   const hud = new HUD({

@@ -122,7 +122,8 @@ vec3 litColour(float warm, float r) {
   return mix(c, neutral, step(0.82, r) * 0.7);
 }
 
-// One storey-and-bay facade. pat: 0 curtain, 1 ribbon, 2 punched, 3 fins, 4 diagrid, 5 balcony, 6 hex, 7 louvre
+// One storey-and-bay facade. pat: 0 curtain, 1 ribbon, 2 punched, 3 fins, 4 diagrid, 5 balcony, 6 hex, 7 louvre,
+// 8 Elysian arcade (round-headed windows, gilded architraves, keystones), 9 Elysian deco (gilded piers, chevron spandrels)
 CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechEvery, float seed, float litP, float warm, float lobbyH) {
   CS o;
   // segment variation along long walls: each stretch reads as a different building
@@ -151,10 +152,30 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
   else if (pat == 2) { du = 0.42; dv = 0.56; frame = panel; fMetal = 0.0; fRough = 0.72; recess = 0.55; }
   else if (pat == 3) { du = 0.34; dv = 0.93; frame = uAccent; fMetal = 0.9; fRough = 0.32; recess = 1.1; }
   else if (pat == 5) { du = 0.9; dv = 0.7; frame = panel; fMetal = 0.05; fRough = 0.6; recess = 1.4; }
+  else if (pat == 8) { du = 0.5; dv = 0.8; frame = panel; fMetal = 0.0; fRough = 0.66; recess = 0.9; }
+  else if (pat == 9) { du = 0.6; dv = 0.74; frame = panel; fMetal = 0.05; fRough = 0.5; recess = 0.6; }
   float cy = c.y - 0.04;
   float wu = fpc(c.x, w.x, du);
   float wv = fpc(cy, w.y, dv);
   float win = wu * wv;
+  float orn = 0.0;   // ornament mask (gilded) for the Elysian patterns
+  if (pat == 8) {
+    // round-headed window: a rectangle topped by a semicircle, cut by a signed distance in metres
+    vec2 q = vec2((fract(c.x) - 0.5) * bayW, (fract(cy) - 0.5) * floorH);
+    float hw = 0.5 * du * bayW, hh = 0.5 * dv * floorH, yc = hh - hw;
+    float d = q.y > yc ? length(vec2(q.x, q.y - yc)) - hw : max(abs(q.x) - hw, -hh - q.y);
+    float fw = max(w.x * bayW, w.y * floorH) * 0.7 + 1e-4;
+    win = mix(1.0 - smoothstep(-fw, fw, d), win * 0.92, far);
+    float arch = (1.0 - smoothstep(0.16 - fw, 0.16 + fw, abs(d - 0.24))) * step(yc - 0.4, q.y);
+    float key = step(abs(q.x), 0.3) * step(hh - 0.1, q.y) * step(q.y, hh + 0.62);
+    float sill = step(abs(q.x), hw + 0.25) * step(-hh - 0.32, q.y) * step(q.y, -hh);
+    orn = max(max(arch, key), sill * 0.7) * (1.0 - far);
+  } else if (pat == 9) {
+    // gilded piers at every bay edge, unbroken through the spandrels
+    float pier = fln(c.x, w.x, 0.085);
+    win *= 1.0 - pier;
+    orn = pier;
+  }
   // structural column lines
   if (colEvery > 0.5) {
     float col = fln(c.x / colEvery, w.x / colEvery, 0.32 / colEvery);
@@ -193,6 +214,63 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
   float rough = mix(fRough, 0.17, win);
   float metal = mix(fMetal, 0.72, win);
   vec3 emis = win * lit * br * grad * litColour(warm, r2);
+  // up close every pane is a room: mullions and a transom, blinds pulled to different heights,
+  // a bright ceiling line, furniture silhouettes against the light, the odd TV glow in a dark flat
+  float near = (1.0 - smoothstep(0.004, 0.028, max(w.x, w.y))) * (1.0 - lobby) * win;
+  if (near > 0.001) {
+    vec2 u = vec2(fract(c.x - 0.5 + 0.5 * du) / du, fract(cy - 0.5 + 0.5 * dv) / dv);
+    vec2 uw = w / vec2(du, dv);
+    float rr = hashI(id + vec2(seed * 211.0 + 7.0, 3.0));
+    float rq = hashI(id + vec2(seed * 61.0 + 2.0, 19.0));
+    float nm = pat == 3 ? 1.0 : (rq < 0.5 ? 2.0 : 3.0);
+    float mull = pat == 3 ? 0.0 : fln(u.x * nm, uw.x * nm, 0.035 * nm);
+    float tran = fln(u.y - 0.2, uw.y, 0.022);
+    float bl = step(0.5, rr) * mix(0.12, 0.8, hashI(id + vec2(5.0, seed * 3.0 + 1.0)));
+    float blind = smoothstep(1.0 - bl - uw.y, 1.0 - bl + uw.y, u.y);
+    float slat = fp(u.y * 46.0, uw.y * 46.0, 0.55);
+    float ceilL = smoothstep(0.86, 0.95, u.y) * (1.0 - smoothstep(0.95, 0.985, u.y));
+    float prof = 0.38 + 0.5 * smoothstep(0.15, 0.85, u.y) + 0.9 * ceilL;
+    float k = floor(u.x * 5.0);
+    float fh = 0.1 + hashI(id * 3.1 + vec2(k, rr * 97.0)) * 0.3;
+    float furn = (1.0 - smoothstep(fh - uw.y, fh + uw.y, u.y)) * step(0.4, hashI(id * 1.7 + vec2(k + 3.0, rq * 53.0)));
+    vec2 pq = (u - vec2(fract(rq * 7.0) * 0.7 + 0.15, 0.2)) * vec2(1.6, 1.0);
+    float plant = (1.0 - smoothstep(0.12, 0.135, length(pq) + 0.03 * sin(atan(pq.y, pq.x) * 7.0 + rq * 20.0))) * step(0.72, rr) * step(0.08, u.y);
+    float shade = (1.0 - 0.82 * max(furn, plant)) * mix(1.0, 0.32 + 0.18 * slat, blind);
+    float bars = max(mull, tran);
+    vec3 tint = mix(vec3(1.0), vec3(0.75, 0.95, 0.7), plant * 0.6);
+    emis *= mix(vec3(1.0), prof * shade * tint * (1.0 - bars) * 0.62, near);
+    // a dark flat with a television on
+    float tv = step(lit, 0.5) * step(0.9, rq) * (0.55 + 0.45 * sin(uCityTime * (2.0 + rr * 5.0) + rq * 40.0));
+    emis += near * (1.0 - bars) * tv * vec3(0.35, 0.5, 1.0) * 0.12 * smoothstep(0.1, 0.7, u.y);
+    // unlit rooms are not voids: a corridor light deep inside, furniture against it
+    emis += near * (1.0 - bars) * step(lit, 0.5) * (1.0 - tv) * step(0.35, rr) * vec3(1.0, 0.8, 0.6) * 0.035 * (1.0 - 0.8 * furn) * (1.0 - blind) * smoothstep(0.0, 0.9, u.y);
+    vec3 blindC = mix(vec3(0.78, 0.75, 0.68), vec3(0.55, 0.6, 0.66), step(0.75, rq));
+    alb = mix(alb, blindC * (0.85 + 0.15 * slat), blind * near * 0.8);
+    alb = mix(alb, frame, bars * near);
+    rough = mix(rough, 0.75, blind * near); metal = mix(metal, 0.1, blind * near);
+    rough = mix(rough, fRough, bars * near); metal = mix(metal, fMetal, bars * near);
+    h += (bars * 0.35 - blind * 0.1) * near;
+  }
+  // spandrels up close: panel joints and a shadowed reveal at each slab edge
+  float nearS = (1.0 - smoothstep(0.004, 0.028, max(w.x, w.y))) * (1.0 - win) * (1.0 - lobby);
+  if (nearS > 0.001) {
+    float jx = fln(c.x, w.x, 0.012), jy = fln(cy - 0.5 - 0.5 * dv + 0.06, w.y, 0.01);
+    float rev = fp(cy + 0.5 - 0.5 * dv, w.y, 0.018);
+    float tone = mix(0.92, 1.06, hashI(id * 2.3 + vec2(seed * 5.0, 41.0)));
+    alb = mix(alb, alb * tone * (1.0 - 0.6 * max(jx, jy)) * (1.0 - 0.7 * rev), nearS);
+    h -= (0.12 * max(jx, jy) + 0.3 * rev) * nearS;
+  }
+  if (pat == 8 || pat == 9) {
+    float sx = abs(fract(c.x) - 0.5) * bayW, sy = fract(cy) * floorH;
+    if (pat == 9) {
+      // stepped chevrons in the spandrels, the deco signature
+      float cv = (sy + sx * 0.9) / 0.6;
+      float chev = fp(cv, (w.y * floorH + w.x * bayW * 0.9) / 0.6, 0.22) * (1.0 - win) * (1.0 - orn);
+      alb = mix(alb, alb * 0.78, chev * (1.0 - far)); h += chev * 0.25 * (1.0 - far);
+    }
+    alb = mix(alb, uAccent, orn); metal = mix(metal, 0.92, orn); rough = mix(rough, 0.3, orn);
+    emis *= 1.0 - orn; h += orn * 0.7;
+  }
   if (pat == 4) {
     // diagrid: diagonal structure over a curtain wall
     float k = 6.0, kx = k * floorH / bayW;
@@ -368,6 +446,37 @@ CS citySurface(vec2 f, float zone, float seed, vec3 wp) {
     float m = max(fln(c.x, w.x, 0.06), fln(c.y, w.y, 0.06));
     o.alb = mix(vec3(0.18, 0.24, 0.3), uFrame, m); o.rough = mix(0.05, 0.4, m); o.metal = mix(0.9, 0.7, m);
     o.emis = (1.0 - m) * vec3(1.0, 0.82, 0.6) * 0.35 * uLitI * mix(step(0.4, hashI(floor(c / 3.0) + seed)), 0.6, far); o.h = m * 0.2 * (1.0 - far); o.ao = 1.0;
+  } else if (zn == 10) {
+    // patinated standing-seam mansard: verdigris, slate or old bronze, with a row of lit dormers
+    vec2 c = vec2(f.x / 0.62, f.y);
+    vec2 w = max(fwidth(c), vec2(1e-5));
+    float far = smoothstep(0.25, 0.9, w.x);
+    float pick = fract(seed * 7.31);
+    vec3 base = pick < 0.62 ? vec3(0.27, 0.5, 0.43) : (pick < 0.86 ? vec3(0.17, 0.19, 0.23) : vec3(0.42, 0.3, 0.18));
+    float streak = hashI(vec2(floor(c.x), 3.0) + seed * 13.0);
+    vec3 col = base * mix(0.8, 1.12, streak) * mix(0.85, 1.05, smoothstep(0.0, 6.0, f.y));
+    float seam = fln(c.x, w.x, 0.1);
+    col = mix(col, base * 1.35, seam * (1.0 - far));
+    // dormers: every 3.6 m along the roof, a framed window between 1.2 m and 3.0 m up the slope
+    vec2 dc = vec2(f.x / 3.6, (f.y - 1.2) / 1.8);
+    vec2 dw = max(fwidth(dc), vec2(1e-5));
+    float dfar = smoothstep(0.2, 0.7, dw.x);
+    float dorm = fpc(dc.x, dw.x, 0.42) * fp(dc.y, dw.y, 1.0) * step(0.0, dc.y) * step(dc.y, 1.0);
+    float dframe = fpc(dc.x, dw.x, 0.56) * fp(dc.y + 0.12, dw.y, 1.24) * step(-0.12, dc.y) * step(dc.y, 1.12) * (1.0 - dorm);
+    float on = mix(step(hashI(floor(dc) + seed * 31.0), 0.55), 0.5, dfar);
+    o.alb = mix(mix(col, vec3(0.82, 0.8, 0.74), dframe), vec3(0.05, 0.05, 0.06), dorm);
+    o.rough = mix(mix(0.5, 0.35, seam), 0.15, dorm); o.metal = mix(0.55, 0.0, max(dorm, dframe));
+    o.emis = dorm * on * vec3(1.0, 0.72, 0.42) * 1.25 * uLitI * (1.0 - dfar * 0.4);
+    o.h = (seam * 0.2 + dframe * 0.5 - dorm * 0.3) * (1.0 - far); o.ao = 1.0;
+  } else if (zn == 11) {
+    // lantern glass: a warm, mullioned light that crowns the towers
+    vec2 c = f / vec2(1.5, 1.9);
+    vec2 w = max(fwidth(c), vec2(1e-5));
+    float far = smoothstep(0.3, 1.1, max(w.x, w.y));
+    float m = mix(max(fln(c.x, w.x, 0.09), fln(c.y, w.y, 0.07)), 0.12, far);
+    float flick = 0.92 + 0.08 * sin(uCityTime * 0.7 + seed * 40.0);
+    o.alb = mix(vec3(0.1, 0.08, 0.06), uAccent * 0.8, m); o.rough = mix(0.08, 0.35, m); o.metal = mix(0.2, 0.9, m);
+    o.emis = (1.0 - m) * mix(uTrim, vec3(1.0, 0.78, 0.5), 0.6) * 1.5 * uLitI * flick; o.h = m * 0.3 * (1.0 - far); o.ao = 1.0;
   } else {
     o = stone(f, seed);
   }

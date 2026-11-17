@@ -7,6 +7,7 @@ import { TAU } from '../lib/rng.js';
 
 export const Z = {
   FACADE: 0, PODIUM: 1, CLAD: 2, ROOF: 3, METAL: 4, TRIM: 5, DARKGLASS: 6, GARDEN: 7, GLASS: 8, STONE: 9,
+  COPPER: 10, LANTERN: 11,
 };
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _n = new THREE.Vector3();
