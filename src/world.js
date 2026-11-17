@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 export const WORLD = {
   // Direction *toward* the sun.
-  sunDir: new THREE.Vector3(0.45, 0.42, -0.79).normalize(),
+  sunDir: new THREE.Vector3(0.3, 0.88, -0.36).normalize(),
   sunColor: new THREE.Color(1.0, 0.94, 0.86),
   sunIntensity: 3.4,
 
@@ -20,8 +20,8 @@ export const WORLD = {
   moonRadius: 4200,
 
   // Milky Way orientation
-  galNormal: new THREE.Vector3(-0.35, 0.62, 0.7).normalize(),
-  galCenter: new THREE.Vector3(0.9, 0.25, 0.2), // will be orthogonalised
+  galNormal: new THREE.Vector3(0.734, -0.643, -0.223).normalize(),
+  galCenter: new THREE.Vector3(-0.2, 0.31, -1.55), // will be orthogonalised
 
   skyRadius: 1.4e6,
 };

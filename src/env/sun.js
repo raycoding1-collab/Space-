@@ -83,16 +83,16 @@ export function createSun({ shadowMapSize = 4096 } = {}) {
   light.shadow.mapSize.set(shadowMapSize / 2, shadowMapSize);
   const cam = light.shadow.camera;
   cam.up.set(0, 0, 1);
-  cam.left = -1350; cam.right = 1350;
-  cam.top = 3700; cam.bottom = -3700;
+  cam.left = -1150; cam.right = 1150;
+  cam.top = 3350; cam.bottom = -3350;
   cam.near = 100; cam.far = 22000;
   light.shadow.bias = -0.0004;
   light.shadow.normalBias = 1.2;
   light.shadow.radius = 2;
   const target = new THREE.Object3D();
-  target.position.set(0, 0, 0);
+  target.position.set(0, 0, 300);
   light.target = target;
-  light.position.copy(WORLD.sunDir).multiplyScalar(10000);
+  light.position.copy(WORLD.sunDir).multiplyScalar(10000).add(target.position);
 
   return {
     group,

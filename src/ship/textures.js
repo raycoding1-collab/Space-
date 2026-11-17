@@ -52,17 +52,17 @@ export function makeHullTextures(S = 2048, aniso = 8) {
 
   for (const L of leaves) {
     const type = rng.weighted([
-      ['plain', 74], ['riveted', 9], ['hatch', 6], ['vent', 3], ['dark', 5], ['tiles', 2], ['stripe', 0.4],
+      ['plain', 80], ['riveted', 9], ['hatch', 5], ['vent', 3], ['dark', 3], ['tiles', 0], ['stripe', 0],
     ]);
-    let tone = rng.range(0.86, 0.95);
-    let rgh = rng.range(0.34, 0.5);
-    let mtl = rng.range(0.15, 0.35);
+    let tone = rng.range(0.9, 0.95);
+    let rgh = rng.range(0.54, 0.62);
+    let mtl = rng.range(0.18, 0.26);
     let tint = [1, 1, 1];
-    if (type === 'dark') { tone = rng.range(0.66, 0.76); rgh = rng.range(0.4, 0.55); mtl = 0.45; }
+    if (type === 'dark') { tone = rng.range(0.8, 0.86); rgh = rng.range(0.55, 0.62); mtl = 0.26; }
     if (type === 'tiles') { tone = rng.range(0.6, 0.7); rgh = 0.6; mtl = 0.1; }
     if (rng.chance(0.06)) tint = [1.0, 0.985, 0.96];
     if (rng.chance(0.05)) tint = [0.97, 0.98, 1.0];
-    const level = rng.range(0, 0.35);
+    const level = rng.range(0, 0.12);
     for (let y = L.y; y < L.y + L.h; y++) {
       for (let x = L.x; x < L.x + L.w; x++) {
         const i = y * S + x;
@@ -103,13 +103,13 @@ export function makeHullTextures(S = 2048, aniso = 8) {
       const fine = noise.noise(u, v, 512);
       const k = 0.9 + 0.12 * g1 - 0.04 * smoothstep(0.55, 0.8, streak) + 0.02 * (fine - 0.5);
       R[i] *= k; G[i] *= k; B[i] *= k;
-      rough[i] = clamp(rough[i] + 0.18 * (g1 - 0.5) + 0.08 * (fine - 0.5), 0.05, 1);
+      rough[i] = clamp(rough[i] + 0.12 * (g1 - 0.5) + 0.04 * (fine - 0.5), 0.05, 1);
       H[i] += (fine - 0.5) * 0.04;
     }
   }
 
   const albedo = writeRGB(makeCanvas(S, S), R, G, B);
-  const normal = heightToNormal(H, S, S, 1.6);
+  const normal = heightToNormal(H, S, S, 1.1);
   const zero = new Float32Array(N);
   const rm = writeRGB(makeCanvas(S, S), zero, rough, metal);
 
@@ -117,34 +117,33 @@ export function makeHullTextures(S = 2048, aniso = 8) {
   const eR = new Float32Array(N), eG = new Float32Array(N), eB = new Float32Array(N);
   const hR = R.slice(), hG = G.slice(), hB = B.slice();
   const hRough = rough.slice(), hMetal = metal.slice();
-  const DECKS = 28;
-  const deck = Math.round(S / DECKS); // deck pitch in px (tile 96 m → ~3.4 m decks)
+  const DECKS = 40;
+  const deck = Math.round(S / DECKS); // deck pitch in px (tile 144 m → 3.6 m decks)
   const bandsOn = new Uint8Array(DECKS);
   for (let k = 0; k < DECKS; k++) bandsOn[k] = rng.chance(0.8) ? 1 : 0;
-  const winW = 12, winH = Math.round(deck * 0.45), pitch = 20;
-  const warm = [[1.0, 0.72, 0.42], [1.0, 0.8, 0.55], [1.0, 0.88, 0.7], [0.85, 0.92, 1.0], [1.0, 0.66, 0.36]];
+  // Fine, regular window rows: small square ports, long lit runs that brighten and dim smoothly.
+  const port = 11, pitch = 21;
+  const warm = [[1.0, 0.74, 0.46], [1.0, 0.8, 0.56], [1.0, 0.86, 0.66], [0.92, 0.95, 1.0]];
   for (let k = 0; k < DECKS; k++) {
     if (!bandsOn[k]) continue;
-    const y0 = k * deck + Math.round((deck - winH) / 2);
-    let litRun = rng.chance(0.5);
-    let runCol = rng.pick(warm);
-    const lounge = rng.chance(0.12);
+    const y0 = k * deck + Math.round((deck - port) / 2);
+    const rowCol = rng.pick(warm);
+    const rowLit = rng.chance(0.62);
+    const rowLevel = rng.range(0.6, 1.0);
+    let gapLeft = 0;
     for (let wx = 0; wx < S; wx += pitch) {
-      if (rng.chance(0.12)) litRun = !litRun;
-      if (rng.chance(0.08)) runCol = rng.pick(warm);
-      const lit = lounge || (litRun ? rng.chance(0.86) : rng.chance(0.18));
-      const bright = lit ? rng.range(0.55, 1.0) : 0;
-      const ww = lounge ? pitch - 4 : winW;
-      for (let y = y0; y < y0 + winH; y++) {
-        for (let x = wx; x < wx + ww && x < S; x++) {
+      // occasional dark stretches (unoccupied compartments) break the rows up
+      if (gapLeft <= 0 && rng.chance(0.012)) gapLeft = rng.int(4, 24);
+      const dark = gapLeft-- > 0;
+      const lit = rowLit && !dark && rng.chance(0.94);
+      const bright = lit ? rowLevel * rng.range(0.88, 1.0) : 0;
+      for (let y = y0; y < y0 + port; y++) {
+        for (let x = wx; x < wx + port && x < S; x++) {
           const i = y * S + x;
-          const ex = Math.min(x - wx, wx + ww - 1 - x, y - y0, y0 + winH - 1 - y);
-          if (ex < 1) { hR[i] *= 0.4; hG[i] *= 0.4; hB[i] *= 0.4; continue; }
-          hR[i] = 0.03; hG[i] = 0.035; hB[i] = 0.045; hRough[i] = 0.08; hMetal[i] = 0.9;
-          // interior falloff: brighter at top of window (ceiling lights)
-          const fy = (y - y0) / winH;
-          const f = bright * (0.75 + 0.25 * (1 - fy));
-          eR[i] = runCol[0] * f; eG[i] = runCol[1] * f; eB[i] = runCol[2] * f;
+          const ex = Math.min(x - wx, wx + port - 1 - x, y - y0, y0 + port - 1 - y);
+          if (ex < 1) { hR[i] *= 0.6; hG[i] *= 0.6; hB[i] *= 0.6; continue; }
+          hR[i] = 0.035; hG[i] = 0.04; hB[i] = 0.05; hRough[i] = 0.1; hMetal[i] = 0.8;
+          eR[i] = rowCol[0] * bright; eG[i] = rowCol[1] * bright; eB[i] = rowCol[2] * bright;
         }
       }
     }

@@ -4,7 +4,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { TAU } from './rng.js';
 
 // Physical size multiplier for hull texture tiles (one 2048² plating tile ≈ 96 m).
-export const TILE_SCALE = 2;
+export const TILE_SCALE = 3;
 
 /**
  * Revolve a 2D profile [[r, z], ...] around the Z axis.
@@ -264,6 +264,29 @@ export function surfaceMatrix(r, phi, z, sx, sy, sz, out = new THREE.Matrix4(), 
   }
   out.makeBasis(tangent.multiplyScalar(sx), radial.clone().multiplyScalar(sy), axis.multiplyScalar(sz));
   out.setPosition(radial.x * r, radial.y * r, z);
+  return out;
+}
+
+export function scaleUV(g, k) {
+  const uv = g.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * k, uv.getY(i) * k);
+  return g;
+}
+
+/** Split a (non-indexed or indexed) geometry with groups into one geometry per group index. */
+export function splitGroups(geo) {
+  const g = geo.index ? geo.toNonIndexed() : geo;
+  const out = {};
+  for (const grp of geo.groups) {
+    const part = new THREE.BufferGeometry();
+    for (const name of ['position', 'normal', 'uv']) {
+      const a = g.attributes[name];
+      if (!a) continue;
+      part.setAttribute(name, new THREE.BufferAttribute(a.array.slice(grp.start * a.itemSize, (grp.start + grp.count) * a.itemSize), a.itemSize));
+    }
+    const k = grp.materialIndex;
+    out[k] = out[k] ? mergeGeometries([out[k], part]) : part;
+  }
   return out;
 }
 

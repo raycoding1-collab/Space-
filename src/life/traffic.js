@@ -1,17 +1,17 @@
-// Life aboard and around the ark: shuttle traffic between bays, pylons and the rings, departures
-// to the moon, maglev trains along the keel, spoke elevators and maintenance welding arcs.
+// Life around the capital ship: shuttles cycling through the ventral hangar bays, runs to the escort
+// frigates and the moon, patrol orbits, maglev pods racing along the dorsal trench, welding arcs.
 import * as THREE from 'three';
-import { Instancer, cyl, lathe } from '../lib/geo.js';
-import { RNG, TAU, DEG, smoothstep, clamp } from '../lib/rng.js';
+import { lathe } from '../lib/geo.js';
+import { RNG, TAU, clamp } from '../lib/rng.js';
 import { shuttleGeometry } from '../ship/craft.js';
 import { LightSet, NAV } from '../ship/lights.js';
-import { SPINE } from '../ship/spine.js';
-import { SHIP, WORLD } from '../world.js';
+import { hullParams } from '../ship/hull.js';
+import { TRENCH } from '../ship/capital.js';
+import { WORLD } from '../world.js';
 
 const ease = (x) => x * x * (3 - 2 * x);
 const easeTravel = (x) => {
-  // accelerate, cruise, decelerate
-  const a = 0.18;
+  const a = 0.2;
   if (x < a) return (x * x) / (2 * a * (1 - a));
   if (x > 1 - a) return 1 - ((1 - x) * (1 - x)) / (2 * a * (1 - a));
   return (x - a / 2) / (1 - a);
@@ -31,65 +31,59 @@ export function buildTraffic(ship, M) {
   const group = new THREE.Group();
   group.name = 'traffic';
   const rng = new RNG(1234);
-  const { bays } = ship.ctx;
+  const bays = ship.ctx.bays;
   const updates = [];
-
-  // ---------------------------------------------------------------- routes
   const routes = [];
-  const pylonPhis = [30, 150, 270].map((a) => a * DEG);
-  const nexusZ = (SHIP.nexus.z0 + SHIP.nexus.z1) / 2;
-  const gapZ = (SHIP.ringA.z + SHIP.ringB.z) / 2;
   const moonDir = WORLD.moonCenter.clone().normalize();
+  const escortSpots = [new THREE.Vector3(1900, 420, 900), new THREE.Vector3(-2100, -380, 300), new THREE.Vector3(1500, -700, -1700), new THREE.Vector3(-1350, 820, 2100)];
 
-  for (const bay of bays) {
+  bays.forEach((bay, bi) => {
     const out = (d) => bay.centre.clone().addScaledVector(bay.normal, d);
-    const start = out(30);
-    // Bay → Nexus pylon
-    for (const pp of pylonPhis) {
-      const mid = (bay.phi + pp) / 2 + (Math.abs(bay.phi - pp) > Math.PI ? Math.PI : 0);
-      const pts = [start, out(140), out(320).setZ(bay.centre.z + 120), cyl(820, bay.phi, -500), cyl(860, mid, 300), cyl(820, pp, 1150), cyl(660, pp, nexusZ - 40), cyl(600, pp, nexusZ + 90)];
-      routes.push({ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal'), speed: rng.range(90, 140), wait: rng.range(6, 14), count: 2 });
-    }
-    // Bay → between the Halo rings → hub
+    const start = out(-6);
+    const side = Math.sign(bay.centre.x) || 1;
+    // departures toward the moon
     {
-      const phi = bay.phi;
-      const pts = [start, out(160), cyl(700, phi, -1000), cyl(1300, phi + 0.2, 200), cyl(1420, phi + 0.25, 1700), cyl(1400, phi + 0.25, gapZ), cyl(820, phi + 0.25, gapZ), cyl(260, phi + 0.25, gapZ)];
-      routes.push({ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal'), speed: rng.range(110, 160), wait: rng.range(8, 16), count: 2 });
+      const far = moonDir.clone().multiplyScalar(24000).add(new THREE.Vector3(rng.range(-2500, 2500), rng.range(-2000, 2000), rng.range(-2500, 2500)));
+      const pts = [start, out(70), out(320), out(900).add(new THREE.Vector3(0, -200, -400)), out(2600).lerp(far, 0.25), far];
+      routes.push({ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal'), speed: rng.range(240, 360), wait: rng.range(4, 10), count: 2 });
     }
-    // Departures toward the moon Ilex (and arrivals)
+    // runs to an escort frigate on the same side
     {
-      const far = moonDir.clone().multiplyScalar(26000).add(new THREE.Vector3(rng.range(-3000, 3000), rng.range(-2000, 2000), rng.range(-3000, 3000)));
-      const pts = [start, out(260), out(900).add(new THREE.Vector3(0, 0, -300)), out(2600).lerp(far, 0.2), far];
-      routes.push({ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal'), speed: rng.range(260, 380), wait: rng.range(4, 10), count: 2 });
+      const cands = escortSpots.filter((p) => Math.sign(p.x) === side);
+      const tgt = cands[bi % cands.length].clone();
+      const dock = tgt.clone().add(new THREE.Vector3(-side * 60, -40, 0));
+      const mid = new THREE.Vector3(side * 1250, Math.min(-200, tgt.y - 300), (bay.centre.z + tgt.z) / 2);
+      const pts = [start, out(70), out(380), mid, dock];
+      routes.push({ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal'), speed: rng.range(110, 170), wait: rng.range(8, 16), count: 1 });
     }
-  }
-  // Bow ↔ Nexus courier runs
-  for (const pp of pylonPhis) {
-    const pts = [cyl(600, pp, nexusZ + 90), cyl(760, pp, nexusZ + 300), cyl(1350, pp + 0.6, 2000), cyl(1350, pp + 0.6, 2700), cyl(460, pp + 0.6, 3020), cyl(330, pp + 0.6, 3090)];
-    routes.push({ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal'), speed: rng.range(100, 150), wait: rng.range(10, 20), count: 1 });
-  }
-  // Security patrol loops (closed orbits around sections, clear of all structure)
+    // sweeping arrivals from aft
+    {
+      const pts = [new THREE.Vector3(side * 1700, -900, -6500 + bi * 300), new THREE.Vector3(side * 900, -650, -3200), out(700), out(240), out(60), start];
+      routes.push({ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal'), speed: rng.range(150, 230), wait: rng.range(6, 12), count: 1 });
+    }
+  });
+
+  // Patrol orbits (closed, clear of the hull, nacelles and escorts)
   const loops = [];
-  for (const [R, zc, A, speed, count] of [[1450, 600, 260, 85, 3], [1650, -2110, 160, 90, 3], [720, 3330, 90, 60, 2]]) {
+  for (const [R, zc, A, speed, count, tilt] of [[1500, -200, 300, 95, 4, 0.15], [1750, -1900, 200, 85, 3, -0.2], [880, 2300, 120, 70, 3, 0.3]]) {
     const pts = [];
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * TAU;
-      pts.push(new THREE.Vector3(Math.cos(a) * R, Math.sin(a) * R, zc + A * Math.sin(2 * a)));
+      const p = new THREE.Vector3(Math.cos(a) * R, Math.sin(a) * R, zc + A * Math.sin(2 * a));
+      p.applyAxisAngle(new THREE.Vector3(0, 0, 1), tilt);
+      pts.push(p);
     }
     loops.push({ curve: new THREE.CatmullRomCurve3(pts, true, 'centripetal'), speed, count });
   }
-
-  // Pre-measure
   for (const r of routes) { r.length = r.curve.getLength(); r.T = r.length / r.speed; }
   for (const l of loops) { l.length = l.curve.getLength(); l.T = l.length / l.speed; }
 
   // ---------------------------------------------------------------- shuttles
   const agents = [];
-  for (const r of routes) for (let i = 0; i < r.count; i++) agents.push({ kind: 'route', r, phase: rng.range(0, 1), scale: rng.range(0.85, 1.35) });
-  for (const l of loops) for (let i = 0; i < l.count; i++) agents.push({ kind: 'loop', r: l, phase: i / l.count + rng.range(0, 0.1), scale: 0.9 });
+  for (const r of routes) for (let i = 0; i < r.count; i++) agents.push({ kind: 'route', r, phase: rng.range(0, 1), scale: rng.range(0.9, 1.4) });
+  for (const l of loops) for (let i = 0; i < l.count; i++) agents.push({ kind: 'loop', r: l, phase: i / l.count + rng.range(0, 0.1), scale: 1.1 });
 
-  const sGeo = shuttleGeometry(1);
-  const shuttles = new THREE.InstancedMesh(sGeo, M.hullWarm, agents.length);
+  const shuttles = new THREE.InstancedMesh(shuttleGeometry(1), M.armorLight, agents.length);
   shuttles.castShadow = true;
   shuttles.receiveShadow = true;
   shuttles.frustumCulled = false;
@@ -98,17 +92,15 @@ export function buildTraffic(ship, M) {
 
   const sl = new LightSet();
   for (let i = 0; i < agents.length; i++) {
-    sl.add(new THREE.Vector3(), new THREE.Color(0.55, 0.75, 1.0), { intensity: 14, size: 2.6 });
-    sl.add(new THREE.Vector3(), new THREE.Color(0.55, 0.75, 1.0), { intensity: 14, size: 2.6 });
+    sl.add(new THREE.Vector3(), new THREE.Color(0.5, 0.75, 1.0), { intensity: 12, size: 2.6 });
+    sl.add(new THREE.Vector3(), new THREE.Color(0.5, 0.75, 1.0), { intensity: 12, size: 2.6 });
     sl.add(new THREE.Vector3(), NAV.white, { period: 1.3 + rng.range(0, 0.6), phase: rng.next(), duty: 0.06, size: 1.8, intensity: 14 });
   }
   const shuttleLights = new DynamicLights(sl, group, 'shuttle-lights');
-
   const mtx = new THREE.Matrix4(), pos = new THREE.Vector3(), tan = new THREE.Vector3(), up = new THREE.Vector3();
   const q = new THREE.Quaternion(), s = new THREE.Vector3();
   const eL = new THREE.Vector3(), eR = new THREE.Vector3(), strobe = new THREE.Vector3();
   const zero = new THREE.Vector3();
-
   updates.push((t) => {
     for (let i = 0; i < agents.length; i++) {
       const a = agents[i];
@@ -117,8 +109,8 @@ export function buildTraffic(ship, M) {
         const R = a.r;
         const cycle = 2 * (R.T + R.wait);
         const c = ((t / cycle + a.phase) % 1) * cycle;
-        if (c < R.T) { u = easeTravel(c / R.T); }
-        else if (c < R.T + R.wait) { u = 1; }
+        if (c < R.T) u = easeTravel(c / R.T);
+        else if (c < R.T + R.wait) u = 1;
         else if (c < 2 * R.T + R.wait) { u = 1 - easeTravel((c - R.T - R.wait) / R.T); dir = -1; }
         else { u = 0; dir = -1; }
       } else {
@@ -127,14 +119,12 @@ export function buildTraffic(ship, M) {
       a.r.curve.getPointAt(clamp(u, 0, 1), pos);
       a.r.curve.getTangentAt(clamp(u, 0.0005, 0.9995), tan);
       if (dir < 0) tan.negate();
-      up.set(pos.x, pos.y, 0).normalize();
-      if (up.lengthSq() < 0.5) up.set(0, 1, 0);
+      up.set(0, 1, 0);
       mtx.lookAt(tan, zero, up);
       q.setFromRotationMatrix(mtx);
       s.setScalar(a.scale);
       mtx.compose(pos, q, s);
       shuttles.setMatrixAt(i, mtx);
-      // lights
       eL.set(-7.5 * a.scale, -0.8 * a.scale, -19 * a.scale).applyQuaternion(q).add(pos);
       eR.set(7.5 * a.scale, -0.8 * a.scale, -19 * a.scale).applyQuaternion(q).add(pos);
       strobe.set(0, 4 * a.scale, -14 * a.scale).applyQuaternion(q).add(pos);
@@ -146,90 +136,56 @@ export function buildTraffic(ship, M) {
     shuttleLights.commit();
   });
 
-  // ---------------------------------------------------------------- maglev trains
+  // ---------------------------------------------------------------- maglev pods in the dorsal trench
   {
-    const trainGeo = lathe([[0.6, -36], [3.4, -32], [3.8, -20], [3.8, 20], [3.4, 32], [0.6, 36]], { segments: 10, tile: 12 });
-    const trainMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.82, 0.6).multiplyScalar(3.2) });
-    trainMat.userData.castShadow = false;
-    const trains = [];
-    for (const tube of SPINE.tubes) {
-      for (let i = 0; i < 7; i++) trains.push({ tube, phase: rng.range(0, 1), speed: rng.range(110, 170), wait: rng.range(5, 12) });
-    }
-    const inst = new THREE.InstancedMesh(trainGeo, trainMat, trains.length);
+    const podGeo = lathe([[0.6, -22], [3.0, -19], [3.4, -10], [3.4, 10], [3.0, 19], [0.6, 22]], { segments: 10, tile: 12 });
+    const podMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.8, 0.55).multiplyScalar(3.0) });
+    podMat.userData.castShadow = false;
+    const pods = [];
+    for (const lane of [-8, 8, -19.5, 19.5]) for (let i = 0; i < 5; i++) pods.push({ lane, phase: rng.range(0, 1), speed: rng.range(120, 190) * (lane > 0 ? 1 : -1), wait: rng.range(3, 8) });
+    const inst = new THREE.InstancedMesh(podGeo, podMat, pods.length);
     inst.frustumCulled = false;
-    inst.castShadow = false;
-    inst.name = 'trains';
+    inst.name = 'pods';
     group.add(inst);
-    const tl = new LightSet();
-    for (let i = 0; i < trains.length; i++) tl.add(new THREE.Vector3(), NAV.white, { intensity: 10, size: 2.2 });
-    const trainLights = new DynamicLights(tl, group, 'train-lights');
-    const za = SPINE.z0 + 60, zb = SPINE.z1 - 60, len = zb - za;
+    const pl = new LightSet();
+    for (let i = 0; i < pods.length; i++) pl.add(new THREE.Vector3(), NAV.white, { intensity: 9, size: 2 });
+    const podLights = new DynamicLights(pl, group, 'pod-lights');
+    const za = TRENCH.z0 + 40, zb = TRENCH.z1 - 60, len = zb - za;
     const p = new THREE.Vector3();
     updates.push((t) => {
-      trains.forEach((tr, i) => {
-        const T = len / tr.speed;
-        const cycle = 2 * (T + tr.wait);
-        const c = ((t / cycle + tr.phase) % 1) * cycle;
-        let u, d = 1;
-        if (c < T) u = easeTravel(c / T);
-        else if (c < T + tr.wait) u = 1;
-        else if (c < 2 * T + tr.wait) { u = 1 - easeTravel((c - T - tr.wait) / T); d = -1; }
-        else { u = 0; d = -1; }
-        const z = za + u * len;
-        p.set(tr.tube.r * Math.cos(tr.tube.phi), tr.tube.r * Math.sin(tr.tube.phi), z);
+      pods.forEach((pd, i) => {
+        const T = len / Math.abs(pd.speed);
+        const cycle = T + pd.wait;
+        const c = ((t / cycle + pd.phase) % 1) * cycle;
+        const u = c < T ? easeTravel(c / T) : 1;
+        const z = pd.speed > 0 ? za + u * len : zb - u * len;
+        const hp = hullParams(z);
+        p.set(pd.lane, hp.Ht - hp.td + 5.5, z);
         mtx.makeTranslation(p.x, p.y, p.z);
         inst.setMatrixAt(i, mtx);
-        p.z += d * 37;
-        trainLights.set(i, p);
+        p.z += Math.sign(pd.speed) * 23;
+        podLights.set(i, p);
       });
       inst.instanceMatrix.needsUpdate = true;
-      trainLights.commit();
-    });
-  }
-
-  // ---------------------------------------------------------------- spoke elevators
-  for (const ring of [ship.parts.ringA, ship.parts.ringB]) {
-    const cars = [];
-    ring.spokes.forEach((sp, k) => { for (let i = 0; i < 2; i++) cars.push({ sp, phase: rng.range(0, 1), T: rng.range(26, 38) }); });
-    const geo = new THREE.BoxGeometry(7, 7, 12);
-    const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.8, 0.55).multiplyScalar(4) });
-    const inst = new THREE.InstancedMesh(geo, mat, cars.length);
-    inst.frustumCulled = false;
-    inst.castShadow = false;
-    ring.group.add(inst);
-    const m = new THREE.Matrix4();
-    updates.push((t) => {
-      cars.forEach((c, i) => {
-        const x = ((t / c.T + c.phase) % 1);
-        const u = x < 0.5 ? ease(x * 2) : ease(2 - x * 2);
-        const r = c.sp.r0 + 20 + u * (c.sp.r1 - c.sp.r0 - 40);
-        const radial = new THREE.Vector3(Math.cos(c.sp.phi), Math.sin(c.sp.phi), 0);
-        const tangent = new THREE.Vector3(-Math.sin(c.sp.phi), Math.cos(c.sp.phi), 0);
-        m.makeBasis(tangent, new THREE.Vector3(0, 0, 1), radial);
-        m.setPosition(radial.multiplyScalar(r).addScaledVector(tangent, (i % 2 ? 1 : -1) * 13.5));
-        inst.setMatrixAt(i, m);
-      });
-      inst.instanceMatrix.needsUpdate = true;
+      podLights.commit();
     });
   }
 
   // ---------------------------------------------------------------- welding arcs
   {
     const ws = new LightSet();
-    const spots = [];
-    for (const bay of bays) {
-      for (let i = 0; i < 3; i++) spots.push(bay.centre.clone().addScaledVector(bay.tangent, rng.range(-90, 90)).addScaledVector(bay.normal, 4).setZ(bay.centre.z + rng.range(-150, 150)));
-    }
-    for (let i = 0; i < 8; i++) spots.push(cyl(176, rng.range(0, TAU), rng.range(SHIP.cargo.z0, SHIP.cargo.z1)));
-    for (let i = 0; i < 6; i++) spots.push(cyl(212, rng.range(0, TAU), rng.range(SHIP.nexus.z0 + 80, SHIP.nexus.z1 - 80)));
-    for (const p of spots) {
-      ws.add(p, new THREE.Color(0.75, 0.88, 1.0), { intensity: 30, size: 1.0, period: rng.range(0.09, 0.23), phase: rng.next(), duty: rng.range(0.25, 0.6) });
+    for (let i = 0; i < 26; i++) {
+      const z = rng.range(-2300, 2000);
+      const hp = hullParams(z);
+      const sx = rng.sign();
+      const pick = rng.int(0, 2);
+      const v = pick === 0 ? new THREE.Vector3(sx * rng.range(0.1, 0.4) * hp.W, hp.Ht + 6, z)
+        : pick === 1 ? new THREE.Vector3(sx * (hp.W * 0.86), hp.Ht * 0.45, z)
+          : new THREE.Vector3(sx * rng.range(0.4, 0.75) * hp.W, -hp.Hb * 0.8, z);
+      ws.add(v, new THREE.Color(0.75, 0.88, 1.0), { intensity: 30, size: 1.0, period: rng.range(0.09, 0.23), phase: rng.next(), duty: rng.range(0.25, 0.6) });
     }
     ws.build(group, { name: 'welding', minPx: 1.6 });
   }
 
-  return {
-    group,
-    update(t) { for (const f of updates) f(t); },
-  };
+  return { group, update(t) { for (const f of updates) f(t); } };
 }

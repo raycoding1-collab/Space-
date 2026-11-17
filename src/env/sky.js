@@ -94,15 +94,15 @@ void main() {
   dust += smoothstep(0.55, 0.75, dn) * exp(-pow(laneLat / (w * 1.4), 2.0)) * 0.35;
   dust = clamp(dust, 0.0, 1.0);
 
-  vec3 cool = vec3(0.66, 0.76, 1.0);
-  vec3 neutral = vec3(1.0, 0.93, 0.84);
-  vec3 warm = vec3(1.0, 0.74, 0.48);
+  vec3 cool = vec3(0.62, 0.74, 1.0);
+  vec3 neutral = vec3(0.92, 0.92, 0.98);
+  vec3 warm = vec3(1.0, 0.82, 0.6);
   vec3 mwCol = mix(cool, neutral, smoothstep(0.0, 0.5, bulge));
   mwCol = mix(mwCol, warm, smoothstep(0.45, 1.0, bulge));
   vec3 mwLight = mwCol * mw * 0.085;
   mwLight += vec3(1.0, 0.78, 0.52) * core * 0.32 + vec3(1.0, 0.9, 0.75) * coreHot * 0.4;
   // dust absorbs and reddens
-  vec3 ext = mix(vec3(1.0), vec3(0.2, 0.15, 0.11), dust);
+  vec3 ext = mix(vec3(1.0), vec3(0.16, 0.14, 0.13), dust);
   mwLight *= ext;
   // faint reddish H-alpha knots along the plane
   float ha = smoothstep(0.62, 0.85, fbm(d * 9.0 + 11.0, 5) * 0.5 + 0.5) * band;
@@ -110,14 +110,16 @@ void main() {
   col += mwLight;
 
   // ---------- Nebulae ----------
-  col += nebula(d, normalize(vec3(-0.55, 0.30, -0.78)), 0.34,
-                vec3(0.80, 0.16, 0.30), vec3(0.10, 0.48, 0.62), vec3(1.0, 0.62, 0.48), 3.7, 0.10);
-  col += nebula(d, normalize(vec3(0.10, 0.82, -0.56)), 0.22,
-                vec3(0.18, 0.30, 0.85), vec3(0.42, 0.18, 0.72), vec3(0.72, 0.88, 1.0), 12.1, 0.06);
-  col += nebula(d, normalize(vec3(0.62, -0.40, 0.67)), 0.26,
-                vec3(0.75, 0.22, 0.12), vec3(0.85, 0.42, 0.18), vec3(1.0, 0.76, 0.5), 21.4, 0.055);
-  col += nebula(d, normalize(vec3(-0.85, -0.12, 0.50)), 0.18,
-                vec3(0.12, 0.55, 0.55), vec3(0.20, 0.25, 0.70), vec3(0.6, 1.0, 0.9), 33.3, 0.05);
+  col += nebula(d, normalize(vec3(0.22, 0.50, -0.84)), 0.36,
+                vec3(0.80, 0.16, 0.32), vec3(0.10, 0.46, 0.64), vec3(1.0, 0.62, 0.50), 3.7, 0.11);
+  col += nebula(d, normalize(vec3(-0.78, 0.38, -0.50)), 0.24,
+                vec3(0.18, 0.30, 0.85), vec3(0.42, 0.18, 0.72), vec3(0.72, 0.88, 1.0), 12.1, 0.07);
+  col += nebula(d, normalize(vec3(0.82, -0.32, -0.48)), 0.22,
+                vec3(0.75, 0.22, 0.12), vec3(0.85, 0.42, 0.18), vec3(1.0, 0.76, 0.5), 21.4, 0.06);
+  col += nebula(d, normalize(vec3(-0.25, -0.15, 0.96)), 0.3,
+                vec3(0.12, 0.55, 0.55), vec3(0.20, 0.25, 0.70), vec3(0.6, 1.0, 0.9), 33.3, 0.065);
+  col += nebula(d, normalize(vec3(0.55, 0.62, 0.56)), 0.2,
+                vec3(0.70, 0.18, 0.40), vec3(0.95, 0.45, 0.30), vec3(1.0, 0.8, 0.7), 44.4, 0.05);
 
   // ---------- distant galaxies ----------
   col += galaxy(d, normalize(vec3(0.35, 0.55, 0.76)), vec3(0.2, 0.9, 0.1), 0.018, 0.38, vec3(1.0, 0.92, 0.8));

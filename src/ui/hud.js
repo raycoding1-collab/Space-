@@ -10,7 +10,7 @@ export class HUD {
     this.showLabels = false;
     this.el = {
       hud: $('hud'), list: $('poi-list'), kicker: $('info-kicker'), title: $('info-title'), text: $('info-text'),
-      stats: $('info-stats'), caption: $('caption'), hint: $('hint'), clock: $('t-clock'), spin: $('t-spin'),
+      stats: $('info-stats'), caption: $('caption'), hint: $('hint'), clock: $('t-clock'), spin: $('t-vel'),
       range: $('t-range'), labels: $('labels'), fade: $('fade'), toast: $('toast'), quality: $('btn-quality'),
       labelsBtn: $('btn-labels'), info: $('info'),
     };
@@ -92,7 +92,7 @@ export class HUD {
   }
   setQualityLabel(s) { this.el.quality.textContent = `Quality: ${s}`; }
 
-  telemetry({ simTime, ringPeriod, range }) {
+  telemetry({ simTime, range }) {
     const days = 214 * 365.25 + 132 + simTime / 86400;
     const yr = Math.floor(days / 365.25);
     const d = Math.floor(days - yr * 365.25);
@@ -101,7 +101,7 @@ export class HUD {
     const mm = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
     const ss = String(sec % 60).padStart(2, '0');
     this.el.clock.textContent = `Y${yr} · D${String(d).padStart(3, '0')} · ${hh}:${mm}:${ss}`;
-    this.el.spin.textContent = `${ringPeriod.toFixed(1)} s / rev`;
+    this.el.spin.textContent = `${(0.0312 + 0.00002 * Math.sin(simTime * 0.01)).toFixed(4)} c`;
     this.el.range.textContent = range > 2000 ? `${(range / 1000).toFixed(2)} km` : `${Math.round(range)} m`;
   }
 

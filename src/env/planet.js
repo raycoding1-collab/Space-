@@ -35,12 +35,11 @@ void main() {
   float warp = fbm(q * 1.2 + vec3(0.0, 3.0, 0.0), 5);
   float turb = fbm(vec3(s.x * 6.0, s.y * 40.0, s.z * 6.0) + warp * 1.5, 6);
   float fineT = fbm(vec3(s.x * 22.0, s.y * 120.0, s.z * 22.0) + turb * 2.0, 4);
-  float bandCoord = lat * 5.2 + 0.35 * warp + 0.08 * turb + 0.025 * fineT;
+  float bandCoord = lat * 5.2 + 0.32 * warp + 0.11 * turb + 0.04 * fineT;
   vec3 col = palette(bandCoord * 0.5 + 0.13);
-  // band edge shear: bright/dark festoons
-  float edge = abs(fract(bandCoord * 1.0) - 0.5);
-  col *= 0.88 + 0.22 * smoothstep(0.0, 0.5, edge);
-  col *= 0.86 + 0.2 * turb + 0.08 * fineT;
+  // festoons and eddies along the belt boundaries
+  float eddy = fbm(vec3(s.x * 14.0, s.y * 70.0, s.z * 14.0) + vec3(turb * 3.0, 0.0, warp * 2.0), 5);
+  col *= 0.84 + 0.18 * turb + 0.1 * fineT + 0.08 * eddy;
   // great storm
   vec2 sp = vec2(lon - 0.9, (lat + 0.38) * 2.2);
   float sr = length(sp * vec2(1.0, 1.6));
@@ -171,7 +170,7 @@ void main() {
   // soft terminator from the deep atmosphere
   float diff = smoothstep(-0.06, 0.6, ndl) * (0.25 + 0.75 * clamp(ndl * 1.2 + 0.1, 0.0, 1.0));
   float limb = pow(mu, 0.35);
-  vec3 col = alb * uSunColor * diff * limb * 1.0;
+  vec3 col = alb * uSunColor * diff * limb * 0.8;
   // warm scattering band at the terminator
   float term = smoothstep(-0.14, 0.02, ndl) * (1.0 - smoothstep(0.02, 0.22, ndl));
   col += alb * vec3(1.0, 0.45, 0.18) * term * 0.22;

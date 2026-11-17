@@ -11,7 +11,7 @@ export function createMaterials({ texSize = 2048, aniso = 8 } = {}) {
   const hullBase = {
     map: T.albedo,
     normalMap: T.normal,
-    normalScale: new THREE.Vector2(0.9, 0.9),
+    normalScale: new THREE.Vector2(0.55, 0.55),
     roughnessMap: T.rm,
     metalnessMap: T.rm,
     roughness: 1.0,
@@ -29,6 +29,13 @@ export function createMaterials({ texSize = 2048, aniso = 8 } = {}) {
   // Charcoal heat-shield tiling
   M.hullBlack = new THREE.MeshStandardMaterial({ ...hullBase, color: new THREE.Color(0.17, 0.18, 0.2), metalness: 0.6 });
 
+  // Capital-ship armour: graphite, titanium and near-black plating
+  M.armor = new THREE.MeshStandardMaterial({ ...hullBase, color: new THREE.Color(0.15, 0.158, 0.172) });
+  M.armorLight = new THREE.MeshStandardMaterial({ ...hullBase, color: new THREE.Color(0.36, 0.37, 0.385) });
+  M.armorDark = new THREE.MeshStandardMaterial({ ...hullBase, color: new THREE.Color(0.085, 0.09, 0.1) });
+  M.armorAccent = new THREE.MeshStandardMaterial({ ...hullBase, color: new THREE.Color(0.55, 0.16, 0.1) });
+  M.trench = new THREE.MeshStandardMaterial({ ...hullBase, color: new THREE.Color(0.09, 0.095, 0.1) });
+
   // Inhabited decks: windows lit from within
   M.hab = new THREE.MeshStandardMaterial({
     map: T.habAlbedo,
@@ -44,7 +51,8 @@ export function createMaterials({ texSize = 2048, aniso = 8 } = {}) {
     color: new THREE.Color(0.88, 0.88, 0.89),
   });
   M.habDark = M.hab.clone();
-  M.habDark.color = new THREE.Color(0.42, 0.44, 0.48);
+  M.habDark.color = new THREE.Color(0.22, 0.23, 0.25);
+  M.habDark.emissiveIntensity = 4.2;
 
   // Gold multi-layer insulation
   M.gold = new THREE.MeshStandardMaterial({
@@ -115,6 +123,10 @@ export function createMaterials({ texSize = 2048, aniso = 8 } = {}) {
   M.glowRed = glow(1.0, 0.12, 0.08, 6);
   M.glowViolet = glow(0.5, 0.4, 1.0, 3.2);
   M.glowSun = glow(1.0, 0.86, 0.62, 30);
+  M.seam = glow(0.3, 0.75, 1.0, 1.6);
+  M.glowThroat = glow(0.75, 0.88, 1.0, 3.2);
+  M.seamWarm = glow(1.0, 0.62, 0.3, 1.4);
+  M.bridge = glow(1.0, 0.7, 0.42, 0.6);
 
   M._textures = { ...T, foil, rad, bay };
   return M;

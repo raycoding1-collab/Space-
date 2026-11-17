@@ -116,7 +116,7 @@ export class PostFX {
       depthBuffer: true,
       colorSpace: THREE.LinearSRGBColorSpace,
     });
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.55, 1.6);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.5, 0.5, 2.2);
     this.finalMat = new THREE.ShaderMaterial({
       uniforms: {
         tScene: { value: null },

@@ -34,12 +34,12 @@ export function addTransport(batch, M, matrix, variant = 0) {
   const parts = [];
   const add = (g, mat) => batch.add(g, mat, matrix);
   // command section
-  add(lathe([[16, 40], [15, 56], [10, 70], [2, 78]], { segments: 16, tile: 24 }), M.hullWarm);
-  add(lathe([[16, 30], [16, 40]], { segments: 16, tile: 24 }), M.hab);
+  add(lathe([[16, 40], [15, 56], [10, 70], [2, 78]], { segments: 16, tile: 24 }), M.armorLight);
+  add(lathe([[16, 30], [16, 40]], { segments: 16, tile: 24 }), M.habDark);
   // spine
-  add(lathe([[7, -50], [7, 30]], { segments: 10, tile: 24 }), M.hullDark);
+  add(lathe([[7, -50], [7, 30]], { segments: 10, tile: 24 }), M.armorDark);
   // cargo pods / tanks
-  const podMat = variant % 2 ? M.gold : M.hull;
+  const podMat = variant % 2 ? M.armor : M.armorLight;
   for (let k = 0; k < 4; k++) {
     const phi = k * 90 * DEG + 45 * DEG;
     const pod = lathe([[2, -44], [9, -40], [9, 22], [2, 26]], { segments: 12, tile: 24 });
@@ -47,7 +47,7 @@ export function addTransport(batch, M, matrix, variant = 0) {
     add(pod, podMat);
   }
   // engine block
-  add(lathe([[12, -70], [18, -66], [18, -56], [14, -50]], { segments: 16, tile: 24 }), M.hullDark);
+  add(lathe([[12, -70], [18, -66], [18, -56], [14, -50]], { segments: 16, tile: 24 }), M.armorDark);
   const nozzles = [];
   for (let k = 0; k < 3; k++) {
     const phi = k * 120 * DEG;

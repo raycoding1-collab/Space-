@@ -62,8 +62,8 @@ void main() {
     float sy = exp(-abs(p.x) / (0.45 * s)) * exp(-abs(p.y) / (5.0 * s));
     vec2 q = mat2(0.7071, -0.7071, 0.7071, 0.7071) * p;
     float sd = (exp(-abs(q.y) / (0.45 * s)) * exp(-abs(q.x) / (4.0 * s)) + exp(-abs(q.x) / (0.45 * s)) * exp(-abs(q.y) / (4.0 * s))) * 0.25;
-    float glow = exp(-r / (5.0 * s)) * 0.18;
-    I += (sx + sy) * 0.35 + sd * 0.5 + glow;
+    float glow = exp(-r / (3.0 * s)) * 0.06;
+    I += (sx + sy) * 0.3 + sd * 0.4 + glow;
   }
   float fade = 1.0 - smoothstep(vSize * 0.42, vSize * 0.5, r);
   vec3 c = vColor * vBright * I * fade;
@@ -73,7 +73,7 @@ void main() {
 }
 `;
 
-export function createStars({ count = 90000, bandCount = 170000 } = {}) {
+export function createStars({ count = 90000, bandCount = 60000 } = {}) {
   const rng = new RNG(4242);
   const total = count + bandCount;
   const pos = new Float32Array(total * 3);
@@ -107,7 +107,7 @@ export function createStars({ count = 90000, bandCount = 170000 } = {}) {
       // Pareto brightness (N(>b) ∝ b^-1.5)
       const u = Math.max(1e-6, rng.next());
       b = 0.07 * Math.pow(u, -1 / 1.45);
-      b = Math.min(b, 40);
+      b = Math.min(b, 6);
     } else {
       // dense dim population inside the Milky Way band, piling up toward the bulge
       const lon = rng.gauss() * 1.25;
@@ -117,8 +117,8 @@ export function createStars({ count = 90000, bandCount = 170000 } = {}) {
         .addScaledVector(gb, Math.cos(lat) * Math.sin(lon))
         .addScaledVector(gn, Math.sin(lat));
       const u = Math.max(1e-6, rng.next());
-      b = 0.035 * Math.pow(u, -1 / 1.8);
-      b = Math.min(b, 2.0);
+      b = 0.022 * Math.pow(u, -1 / 1.8);
+      b = Math.min(b, 1.2);
     }
     v.normalize();
     pos[i * 3] = v.x * R; pos[i * 3 + 1] = v.y * R; pos[i * 3 + 2] = v.z * R;
@@ -131,7 +131,7 @@ export function createStars({ count = 90000, bandCount = 170000 } = {}) {
     color[i * 3] = clamp(l + (c[0] - l) * sat, 0, 1);
     color[i * 3 + 1] = clamp(l + (c[1] - l) * sat, 0, 1);
     color[i * 3 + 2] = clamp(l + (c[2] - l) * sat, 0, 1);
-    spike[i] = b > 16 ? 1 : 0;
+    spike[i] = b >= 6 && rng.chance(0.16) ? 1 : 0;
   }
 
   const geo = new THREE.BufferGeometry();

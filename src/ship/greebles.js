@@ -4,13 +4,13 @@ import { surfaceMatrix } from '../lib/geo.js';
 import { TAU } from '../lib/rng.js';
 
 export const GREEBLE_TONES = [
-  new THREE.Color(0.86, 0.87, 0.88),
-  new THREE.Color(0.78, 0.79, 0.8),
-  new THREE.Color(0.55, 0.57, 0.6),
-  new THREE.Color(0.3, 0.32, 0.35),
-  new THREE.Color(0.18, 0.19, 0.21),
-  new THREE.Color(0.95, 0.7, 0.32), // foil
-  new THREE.Color(0.92, 0.9, 0.85),
+  new THREE.Color(0.36, 0.37, 0.39),
+  new THREE.Color(0.3, 0.31, 0.33),
+  new THREE.Color(0.22, 0.23, 0.25),
+  new THREE.Color(0.15, 0.16, 0.17),
+  new THREE.Color(0.09, 0.095, 0.1),
+  new THREE.Color(0.42, 0.3, 0.17), // bronze fittings
+  new THREE.Color(0.44, 0.45, 0.47),
 ];
 const W_TONES = [[0, 22], [1, 22], [2, 16], [3, 14], [4, 8], [5, 6], [6, 12]];
 

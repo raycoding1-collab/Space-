@@ -8,7 +8,6 @@ import { createSun } from './env/sun.js';
 import { buildShip } from './ship/ship.js';
 import { buildTraffic } from './life/traffic.js';
 import { lightUniforms } from './ship/lights.js';
-import { habitatUniforms } from './ship/interior.js';
 import { PostFX } from './post/post.js';
 import { CameraRig, Tour } from './ui/controls.js';
 import { HUD } from './ui/hud.js';
@@ -118,9 +117,6 @@ async function init() {
   // ---------------------------------------------------------------- post & controls
   const post = new PostFX(renderer, { samples: quality.samples });
   const rig = new CameraRig(camera, canvas);
-  const arcadia = ship.parts.arcadia;
-  const arcadiaAngle = () => arcadia.group.rotation.z;
-  const rotZ = (v, a) => v.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), a);
 
   const hud = new HUD({
     pois: POIS,
@@ -153,14 +149,7 @@ async function init() {
   function goToPoi(p) {
     if (mode === 'tour') setMode('orbit');
     hud.setActivePoi(p.id);
-    let pos = p.pos.clone(), tgt = p.target.clone();
-    let dur = null;
-    if (p.frame === 'arcadia') {
-      dur = 6;
-      const a = arcadiaAngle() + arcadia.omega * dur;
-      pos = rotZ(pos, a); tgt = rotZ(tgt, a);
-    }
-    rig.flyTo(pos, tgt, { fov: p.fov, duration: dur });
+    rig.flyTo(p.pos.clone(), p.target.clone(), { fov: p.fov });
   }
 
   // ---------------------------------------------------------------- sizing & quality
@@ -192,35 +181,14 @@ async function init() {
   // ---------------------------------------------------------------- simulation
   let simTime = parseFloat(params.get('t') || '0');
   const timeScale = 1;
-  const ringPeriod = (Math.PI * 2) / Math.abs(ship.parts.ringA.omega);
-  const insideArcadia = (p) => Math.hypot(p.x, p.y) < SHIP.arcadia.Ri - 3 && p.z > SHIP.arcadia.z0 + 60 && p.z < SHIP.arcadia.z1 - 60;
 
   function tick(dt) {
-    const prevAngle = arcadiaAngle();
     ship.update(simTime);
     traffic.update(simTime);
     planet.update(simTime);
     lightUniforms.uTime.value = simTime;
-    habitatUniforms.uTime.value = simTime;
-    // co-rotate with Arcadia when the camera is inside its atmosphere
-    const dA = arcadiaAngle() - prevAngle;
-    if (mode !== 'tour' && !rig.transition && insideArcadia(camera.position) && Math.abs(dA) < 0.5) {
-      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), dA);
-      camera.position.applyQuaternion(q);
-      camera.quaternion.premultiply(q);
-      rig.orbit.target.applyQuaternion(q);
-      rig.vel.applyQuaternion(q);
-      if (mode === 'orbit') camera.up.applyQuaternion(q);
-    }
     if (tour.active) {
       tour.update(dt);
-      const s = tour.shots[tour.i];
-      if (s.frame === 'arcadia') {
-        const a = arcadiaAngle();
-        const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), a);
-        camera.position.applyQuaternion(q);
-        camera.quaternion.premultiply(q);
-      }
     } else {
       rig.update(dt);
     }
@@ -283,8 +251,7 @@ async function init() {
     setTime(t) { simTime = t; tick(0); },
     setView(view) {
       const p = typeof view === 'string' ? POIS.find((x) => x.id === view) : view;
-      let pos = p.pos.clone(), tgt = p.target.clone();
-      if (p.frame === 'arcadia') { tick(0); pos = rotZ(pos, arcadiaAngle()); tgt = rotZ(tgt, arcadiaAngle()); }
+      const pos = p.pos.clone(), tgt = p.target.clone();
       if (p.up) camera.up.copy(p.up);
       rig.set(pos, tgt, p.fov || 50);
       if (p.up) { camera.up.copy(p.up); camera.lookAt(tgt); }
@@ -352,7 +319,7 @@ async function init() {
     render();
     hud.updateLabels(camera, window.innerWidth, window.innerHeight);
     if ((frames & 7) === 0) {
-      hud.telemetry({ simTime, ringPeriod, range: camera.position.length() });
+      hud.telemetry({ simTime, range: camera.position.length() });
     }
     // adaptive resolution: step down if we are well below 30 fps
     acc += dt; frames++;
