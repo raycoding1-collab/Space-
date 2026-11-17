@@ -121,7 +121,7 @@ foundation, with 4.2 million people aboard. VESPERA flies escort to starboard, a
   on the spire. It turns slowly.
 - **Spire District**: five terrace plateaus climb toward the spire, laid out with radial avenues and ring
   streets. Supertall towers reach 1.4 km on the upper terraces.
-- **Districts**: about 15,000 buildings from 21 designed archetypes (blade, twin towers, ziggurat,
+- **Districts**: over 14,000 buildings from 21 designed archetypes (blade, twin towers, ziggurat,
   twisted, needle, crowned cylinder, trifoil, gate, crystal, stacked, courtyard blocks, terraced
   residences, villas and more) in 51 facade styles. Each district has its own architectural language:
   the Meridian commercial core, the canal quarter's warm terraced residences, and garden quarters of
@@ -155,7 +155,7 @@ Facades, roofs, streets and hull plating are computed in shaders from each surfa
 floors, bays, mullions, balconies, louvres, diagrids, mechanical floors, lit window runs, paving, lane
 markings and street lamps. Every pattern is box-filtered with `fwidth`, so it is crisp at 50 m and
 settles to its average colour at 30 km instead of shimmering. Buildings are instanced: each instance
-picks its facade style from a style table, so ~15,000 buildings need only a few hundred draw calls. A
+picks its facade style from a style table, so over 14,000 buildings need only a few hundred draw calls. A
 low golden sun, a shadow map that follows the camera's focus, and a faint field-held atmosphere over the
 deck give the city its scale.
 

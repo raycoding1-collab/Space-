@@ -7,7 +7,7 @@ export const POIS = [
   {
     id: 'overview', name: 'Overview', kicker: 'Flying city-ship', title: 'ELYSION',
     text: 'A city that flies: thirty-two kilometres of towers, terraces, glass biomes and harbours on a sculpted foundation. Four point two million people live aboard. VESPERA, 5.8 km long, flies escort.',
-    stats: [['Length', '32.0 km'], ['Beam', '12.4 km'], ['Citizens', '4.2 million'], ['Buildings', '≈ 15,000'], ['Cruise', '0.0094 c']],
+    stats: [['Length', '32.0 km'], ['Beam', '12.4 km'], ['Citizens', '4.2 million'], ['Buildings', 'over 14,000'], ['Cruise', '0.0094 c']],
     pos: v(21000, 9500, 26000), target: v(0, 1500, -1500), fov: 40,
   },
   {
