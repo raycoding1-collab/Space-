@@ -102,7 +102,7 @@ def overlay_items(tsec):
     items = []
     # opening line
     a = window(tsec, 1.2, starts["harbours"] - 0.3, 1.4, 1.2)
-    items.append(("THE FREE CITY OF THE REACH", F_LINE, 16, BAR + PH * 0.5, a, WHITE))
+    items.append(("THE FREE CITY OF THE REACH", F_LINE, 16, BAR + PH * 0.16, a, WHITE))
     # location captions in the lower bar
     for name, (kick, place) in CAPTIONS.items():
         t0 = starts[name] + 0.6
@@ -113,9 +113,9 @@ def overlay_items(tsec):
     # title card
     tt = starts["finale"] + 2.5
     a = window(tsec, tt, DUR + 5, 2.2, 0.1)
-    items.append(("ELYSION", F_TITLE, 46, BAR + PH * 0.44, a, WHITE))
+    items.append(("ELYSION", F_TITLE, 46, BAR + PH * 0.25, a, WHITE))
     a2 = window(tsec, tt + 1.4, DUR + 5, 1.8, 0.1)
-    items.append(("THE FLYING CITY", F_SUB, 18, BAR + PH * 0.44 + 110, a2 * 0.9, WARM))
+    items.append(("THE FLYING CITY", F_SUB, 18, BAR + PH * 0.25 + 108, a2 * 0.9, WARM))
     return items
 
 

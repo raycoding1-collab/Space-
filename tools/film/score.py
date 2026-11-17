@@ -66,12 +66,12 @@ def pad_voice(m, t0, t1, att=2.5, rel=3.5, bright=2400, amp=0.05, pan=0.0):
         vib = 1 + 0.0025 * np.sin(2 * np.pi * (4.6 + 0.4 * k) * tt + k)
         ph = 2 * np.pi * np.cumsum(np.full(tt.size, ff) * vib) / SR + rng.uniform(0, 6.28)
         y = np.zeros(tt.size)
-        nh = int(min(24, 7000 // ff))
+        nh = int(min(16, 5000 // ff))
         for n in range(1, nh + 1):
-            y += np.sin(n * ph) / n
+            y += np.sin(n * ph) / n ** 1.25
         w = 0.5 + 0.5 * np.sin(np.pi * (pan + (k - 1) * 0.3) * 0.5 + np.pi / 4)
         L[idx] += y * (1 - w) * 1.4; R[idx] += y * w * 1.4
-    L = lowpass(L, bright); R = lowpass(R, bright)
+    L = lowpass(L, bright * 0.8, 4); R = lowpass(R, bright * 0.8, 4)
     return L * e * amp, R * e * amp
 
 
