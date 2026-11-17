@@ -320,7 +320,17 @@ async function init() {
   await step('Compiling shaders', 0.97);
   const tc = performance.now();
   try {
-    if (!STILL) renderer.compile(scene, camera);
+    if (!STILL) {
+      renderer.compile(scene, camera);
+      // upload every texture now too, so nothing stalls the first time it comes into view
+      const seen = new Set();
+      scene.traverse((o) => {
+        const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+        for (const m of mats) for (const v of Object.values(m)) {
+          if (v && v.isTexture && !v.isRenderTargetTexture && !seen.has(v)) { seen.add(v); renderer.initTexture(v); }
+        }
+      });
+    }
   } catch (e) { console.warn('precompile failed', e); }
   console.log(`[boot] shaders compiled in ${((performance.now() - tc) / 1000).toFixed(1)} s`);
   await step('All systems nominal', 1.0);
