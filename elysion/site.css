@@ -29,7 +29,7 @@ body.is-mobile .only-desktop { display: none; }
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1180px) {
   .hud-brand { top: calc(14px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); }
   .brand-name { font-size: 13px; letter-spacing: .5em; }
-  .brand-sub { font-size: 8.5px; letter-spacing: .24em; }
+  .brand-sub { display: none; }
 
   .telemetry {
     display: flex; top: calc(14px + env(safe-area-inset-top)); left: auto; right: calc(14px + env(safe-area-inset-right));
@@ -76,6 +76,7 @@ body.is-mobile .only-desktop { display: none; }
   .modes .mode { padding: 12px 15px; }
   .hint { display: none; }
   .tools .tool:not(#btn-hide):not(#btn-labels) { display: none; }
+  .tools .tool#btn-labels { display: block; }
   .tool { padding: 12px 12px; }
 
   .caption { bottom: calc(190px + env(safe-area-inset-bottom)); font-size: 13px; padding: 0 18px; max-width: 94vw; }

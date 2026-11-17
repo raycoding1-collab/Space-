@@ -179,7 +179,7 @@ export function createCityMaterials() {
   M.whitePlain = hazed(new THREE.MeshStandardMaterial({ color: C(0.8, 0.8, 0.78), metalness: 0.3, roughness: 0.5 }));
   M.goldPlain = hazed(new THREE.MeshStandardMaterial({ color: C(0.95, 0.74, 0.44), metalness: 1.0, roughness: 0.3 }));
 
-  M.frameWhite = hazed(new THREE.MeshStandardMaterial({ color: C(0.86, 0.86, 0.84), metalness: 0.7, roughness: 0.32 }));
+  M.frameWhite = hazed(new THREE.MeshStandardMaterial({ color: C(0.86, 0.86, 0.84), metalness: 0.55, roughness: 0.5 }));
   M.frameBronze = hazed(new THREE.MeshStandardMaterial({ color: C(0.52, 0.37, 0.22), metalness: 0.9, roughness: 0.34 }));
   M.frameGold = hazed(new THREE.MeshStandardMaterial({ color: C(0.92, 0.74, 0.44), metalness: 1.0, roughness: 0.28 }));
   M.foliage = cityPatch(new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.9, metalness: 0.0 }), 'foliage');
