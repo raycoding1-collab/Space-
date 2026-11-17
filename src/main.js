@@ -221,7 +221,7 @@ async function init() {
   let shadowOverride = null;
   // Adaptive shadows: re-render the shadow map when its frame changes, otherwise every third frame
   // (for moving traffic). Stills always get a fresh map.
-  let shadowFrame = 0;
+  let shadowFrame = 0, filmShadowEvery = 0;
   if (sun.adaptive) renderer.shadowMap.autoUpdate = false;
   function fitShadow() {
     if (!sun.adaptive) return;
@@ -233,7 +233,8 @@ async function init() {
       changed = sun.fit(f, d * (PROFILE.shadow.radiusK || 1.2));
     }
     shadowFrame++;
-    if (changed || STILL || shadowFrame % 3 === 0) renderer.shadowMap.needsUpdate = true;
+    const every = filmShadowEvery || 3;
+    if (changed || (STILL && !filmShadowEvery) || shadowFrame % every === 0) renderer.shadowMap.needsUpdate = true;
   }
 
   function tick(dt) {
@@ -305,6 +306,7 @@ async function init() {
   const api = {
     renderer, scene, camera, rig, ship, post, hud, sun, profile: PROFILE,
     setTime(t) { simTime = t; tick(0); },
+    setSimTime(t) { simTime = t; },
     setView(view) {
       const p = typeof view === 'string' ? POIS.find((x) => x.id === view) : view;
       const pos = p.pos.clone(), tgt = p.target.clone();
@@ -314,6 +316,15 @@ async function init() {
       shadowOverride = p.shadow ? { center: new THREE.Vector3(...p.shadow.center), radius: p.shadow.radius } : null;
     },
     renderStill,
+    /** Film frames: keep the canvas at w×h between calls (no resize per frame), advance and render. */
+    renderFrame(w, h, type = 'image/png', q = 0.95) {
+      if (renderer.domElement.width !== w || renderer.domElement.height !== h) applySize(w, h, 1);
+      // shadows: re-rendered when their frame moves, otherwise every other frame (for moving traffic)
+      filmShadowEvery = 2;
+      tick(0);
+      render();
+      return renderer.domElement.toDataURL(type, q);
+    },
     setUI(on) { hud.toggleUI(!on); },
   };
   window.VESPERA = api;

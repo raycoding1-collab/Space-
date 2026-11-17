@@ -30,7 +30,7 @@ export function registerStyle(o = {}) {
     floorH: 4.2, bay: 3.2, colEvery: 4, mech: 0, pat: 0, podPat: 1, litP: 0.35, warm: 0.6,
     podTop: 0, podFloor: 5.5, lobby: 0, segment: 0,
     frame: C(0.62, 0.63, 0.64), glass: C(0.1, 0.13, 0.17), panel: C(0.7, 0.68, 0.64), accent: C(0.85, 0.66, 0.38),
-    trim: C(1.0, 0.75, 0.45), roof: C(0.42, 0.42, 0.42), litI: 1.3, trimI: 2.6, ao: 1, seed: Math.random(), ...o,
+    trim: C(1.0, 0.75, 0.45), roof: C(0.42, 0.42, 0.42), litI: 1.3, trimI: 2.6, ao: 1, seed: (styleList.length * 0.6180339887 + 0.137) % 1, ...o,
   };
   const i = styleList.length;
   if (i >= STYLE_CAP) throw new Error('style table full');

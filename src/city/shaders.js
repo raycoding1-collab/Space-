@@ -791,8 +791,10 @@ const VERT_MAIN = /* glsl */ `
  * Patch a MeshStandardMaterial into a city material.
  * kind: 'facade' | 'plating' | 'ground' | 'haze' (haze only, keeps the material's own look)
  */
+let patchCount = 0;
 export function cityPatch(mat, kind, uniforms = {}, { groundMode = 'cart', key = '' } = {}) {
-  const U = { ...CITY_U, uSeed: { value: Math.random() }, uStyle: { value: 0 }, ...uniforms };
+  // deterministic per-material seed (build order is fixed), so every load of the city looks the same
+  const U = { ...CITY_U, uSeed: { value: (patchCount++ * 0.7548776662 + 0.31) % 1 }, uStyle: { value: 0 }, ...uniforms };
   mat.userData.cityUniforms = U;
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
