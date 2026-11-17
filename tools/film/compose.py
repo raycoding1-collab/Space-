@@ -1,6 +1,8 @@
 """Composes the ELYSION film: rendered frames + letterbox + titles + score -> MP4.
 
-    python3 tools/film/compose.py tools/film/elysion.json <frames-dir> <score.wav> <out.mp4> [--crf 17]
+    python3 tools/film/compose.py tools/film/elysion.json <frames-dir> <score.wav> <out.mp4> [--crf 17] [--upto SHOT]
+
+--upto SHOT composes a preview that ends after SHOT (inclusive), fading out at its end.
 
 Frames are 1920x800 (2.40:1); they are set in a 1920x1080 letterboxed picture. Location captions sit
 in the lower bar, the opening line and the ELYSION title card in the picture, with fades from and to
@@ -17,6 +19,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 film = json.load(open(sys.argv[1]))
 frames_dir, score, out = sys.argv[2], sys.argv[3], sys.argv[4]
 crf = sys.argv[sys.argv.index("--crf") + 1] if "--crf" in sys.argv else "17"
+upto = sys.argv[sys.argv.index("--upto") + 1] if "--upto" in sys.argv else None
 FPS = film.get("fps", 24)
 OW, OH, PW, PH = 1920, 1080, 1920, 800
 BAR = (OH - PH) // 2
@@ -27,7 +30,11 @@ for s in film["shots"]:
     starts[s["name"]] = t
     t += s["dur"]
 DUR = t
-N = int(round(DUR * FPS))
+END = DUR  # where the picture and sound end (earlier for a preview)
+if upto:
+    names = [s["name"] for s in film["shots"]]
+    END = starts[upto] + film["shots"][names.index(upto)]["dur"]
+N = int(round(END * FPS))
 
 CAPTIONS = {  # shot -> (kicker, place)
     "harbours": ("The flank", "The Harbours"),
@@ -122,9 +129,10 @@ def overlay_items(tsec):
 ff = subprocess.Popen([
     "ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{OW}x{OH}", "-r", str(FPS), "-i", "-",
     "-i", score, "-map", "0:v", "-map", "1:a",
+    *(["-af", f"afade=t=out:st={END - 1.5:.3f}:d=1.5"] if END < DUR else []),
     "-c:v", "libx264", "-preset", "slow", "-crf", crf, "-tune", "film", "-profile:v", "high", "-pix_fmt", "yuv420p",
     "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
-    "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-t", f"{DUR:.3f}", out,
+    "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-t", f"{END:.3f}", out,
 ], stdin=subprocess.PIPE)
 
 cache = {}
@@ -137,7 +145,7 @@ for i in range(N):
     canvas = Image.new("RGB", (OW, OH), (0, 0, 0))
     canvas.paste(pic, (0, BAR))
     # fades: from black at the start, to black at the end, and a breath at the finale cut
-    k = ramp(tsec, 0.0, 1.6) * (1 - ramp(tsec, DUR - 2.2, DUR - 0.05))
+    k = ramp(tsec, 0.0, 1.6) * (1 - ramp(tsec, END - (2.2 if END == DUR else 1.2), END - 0.05))
     if k < 1:
         canvas = Image.fromarray((np.asarray(canvas).astype(np.float32) * k).astype(np.uint8))
     items = overlay_items(tsec)
