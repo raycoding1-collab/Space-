@@ -4,8 +4,10 @@ import * as THREE from 'three';
 const $ = (id) => document.getElementById(id);
 
 export class HUD {
-  constructor({ pois, labels, onPoi, onMode, onCapture, onQuality, onToggleLabels }) {
+  constructor({ pois, labels, labelFade = 16000, profile = null, onPoi, onMode, onCapture, onQuality, onToggleLabels }) {
     this.pois = pois;
+    this.profile = profile;
+    this.labelFade = labelFade;
     this.labelDefs = labels;
     this.showLabels = false;
     this.el = {
@@ -93,7 +95,8 @@ export class HUD {
   setQualityLabel(s) { this.el.quality.textContent = `Quality: ${s}`; }
 
   telemetry({ simTime, range }) {
-    const days = 214 * 365.25 + 132 + simTime / 86400;
+    const P = this.profile;
+    const days = (P ? P.clockEpoch : 214 * 365.25 + 132) + simTime / 86400;
     const yr = Math.floor(days / 365.25);
     const d = Math.floor(days - yr * 365.25);
     const sec = Math.floor(simTime + 51840) % 86400;
@@ -101,7 +104,8 @@ export class HUD {
     const mm = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
     const ss = String(sec % 60).padStart(2, '0');
     this.el.clock.textContent = `Y${yr} · D${String(d).padStart(3, '0')} · ${hh}:${mm}:${ss}`;
-    this.el.spin.textContent = `${(0.0312 + 0.00002 * Math.sin(simTime * 0.01)).toFixed(4)} c`;
+    this.el.spin.textContent = P ? P.velocity(simTime) : `${(0.0312 + 0.00002 * Math.sin(simTime * 0.01)).toFixed(4)} c`;
+    if (P && P.liveTelemetry) P.liveTelemetry(simTime, (i, v) => { const e = document.getElementById(`t-v${i}`); if (e) e.textContent = v; });
     this.el.range.textContent = range > 2000 ? `${(range / 1000).toFixed(2)} km` : `${Math.round(range)} m`;
   }
 
@@ -119,7 +123,7 @@ export class HUD {
       if (Math.abs(v.x) > 1.1 || Math.abs(v.y) > 1.1) { el.style.display = 'none'; return; }
       el.style.display = 'block';
       const x = (v.x * 0.5 + 0.5) * w, y = (-v.y * 0.5 + 0.5) * h;
-      const op = THREE.MathUtils.clamp(1.4 - dist / 16000, 0.25, 1);
+      const op = THREE.MathUtils.clamp(1.4 - dist / this.labelFade, 0.25, 1);
       el.style.opacity = op;
       el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
     });

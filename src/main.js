@@ -1,19 +1,34 @@
-// VESPERA — entry point.
+// Entry point: boots the renderer, the environment and the selected ship (?ship=city for ELYSION).
 import * as THREE from 'three';
 import { WORLD } from './world.js';
 import { bakeSky } from './env/sky.js';
 import { createStars } from './env/stars.js';
 import { createPlanetSystem } from './env/planet.js';
 import { createSun } from './env/sun.js';
-import { buildShip } from './ship/ship.js';
-import { buildTraffic } from './life/traffic.js';
 import { lightUniforms } from './ship/lights.js';
 import { PostFX } from './post/post.js';
 import { CameraRig, Tour } from './ui/controls.js';
 import { HUD } from './ui/hud.js';
-import { POIS, TOUR, LABELS } from './data/pois.js';
 
 const params = new URLSearchParams(location.search);
+const SHIP_ID = params.get('ship') === 'city' ? 'city' : 'vespera';
+const { PROFILE } = SHIP_ID === 'city' ? await import('./city/profile.js') : await import('./ship/profile.js');
+const POIS = PROFILE.pois, TOUR = PROFILE.tour, LABELS = PROFILE.labels;
+document.title = PROFILE.docTitle;
+{
+  const set = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt; };
+  set('loader-title', PROFILE.name);
+  set('loader-sub', PROFILE.loaderSub);
+  set('intro-kicker', PROFILE.intro.kicker);
+  set('intro-title', PROFILE.name);
+  set('intro-text', PROFILE.intro.text);
+  set('brand-name', PROFILE.name);
+  set('brand-sub', PROFILE.sub);
+  PROFILE.telemetry.forEach(([k, v], i) => { set(`t-k${i}`, k); set(`t-v${i}`, v); });
+  set('t-clock-label', PROFILE.clockLabel);
+  document.querySelectorAll('.ship-switch a').forEach((a) => a.classList.toggle('active', a.dataset.ship === SHIP_ID));
+  document.body.dataset.ship = SHIP_ID;
+}
 const DPR = window.devicePixelRatio || 1;
 
 const PRESETS = {
@@ -28,6 +43,7 @@ const SCALE_STEPS = [0.6, 0.8, 1.0, 1.25, 1.5, 2.0];
 const STILL = params.has('still');
 const loaderFill = document.getElementById('loader-fill');
 const loaderStage = document.getElementById('loader-stage');
+const ORIGIN = new THREE.Vector3();
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 async function step(label, p) {
   loaderStage.textContent = label;
@@ -59,7 +75,7 @@ async function init() {
   quality.aniso = Math.min(quality.aniso, renderer.capabilities.getMaxAnisotropy());
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 4.0e6);
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, PROFILE.near || 0.5, 4.0e6);
   camera.position.set(9000, 4000, 8000);
   camera.lookAt(0, 0, 0);
 
@@ -80,7 +96,7 @@ async function init() {
   scene.add(planet.group);
   planet.group.traverse((o) => o.layers.enable(1));
 
-  const sun = createSun({ shadowMapSize: quality.shadow });
+  const sun = createSun({ shadowMapSize: quality.shadow, shadow: PROFILE.shadow });
   scene.add(sun.group, sun.light, sun.target);
 
   // fill light: warm planetshine from below, faint cool skylight
@@ -108,19 +124,18 @@ async function init() {
   }
 
   // ---------------------------------------------------------------- ship
-  const ship = await buildShip({ quality, step });
+  const ship = await PROFILE.build({ renderer, quality, step, scene });
   scene.add(ship.root);
-  await step('Scheduling shuttle traffic', 0.88);
-  const traffic = buildTraffic(ship, ship.M);
-  scene.add(traffic.group);
 
   // ---------------------------------------------------------------- post & controls
   const post = new PostFX(renderer, { samples: quality.samples });
-  const rig = new CameraRig(camera, canvas);
+  const rig = new CameraRig(camera, canvas, PROFILE.rig);
 
   const hud = new HUD({
     pois: POIS,
+    profile: PROFILE,
     labels: LABELS,
+    labelFade: PROFILE.labelFade,
     onPoi: (p) => goToPoi(p),
     onMode: (m) => setMode(m),
     onCapture: () => capture(),
@@ -182,9 +197,17 @@ async function init() {
   let simTime = parseFloat(params.get('t') || '0');
   const timeScale = 1;
 
+  let shadowOverride = null;
+  function fitShadow() {
+    if (!sun.adaptive) return;
+    if (shadowOverride) { sun.fit(shadowOverride.center, shadowOverride.radius); return; }
+    const f = rig.focus;
+    const d = camera.position.distanceTo(f);
+    sun.fit(f, d * (PROFILE.shadow.radiusK || 1.2));
+  }
+
   function tick(dt) {
     ship.update(simTime);
-    traffic.update(simTime);
     planet.update(simTime);
     lightUniforms.uTime.value = simTime;
     if (tour.active) {
@@ -193,8 +216,10 @@ async function init() {
       rig.update(dt);
     }
     sun.update(camera, simTime);
+    fitShadow();
     stars.position.copy(camera.position);
     post.updateSun(camera, WORLD.sunDir);
+    ship.frame?.(camera, simTime);
   }
 
   function render() {
@@ -218,7 +243,7 @@ async function init() {
       const url = renderStill(3840, 2160);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `vespera-${Date.now()}.png`;
+      a.download = `${PROFILE.id}-${Date.now()}.png`;
       a.click();
       hud.toast('Saved 4K still');
     }, 60);
@@ -247,7 +272,7 @@ async function init() {
 
   // Automation / deep-link API
   const api = {
-    renderer, scene, camera, rig, ship, post, hud,
+    renderer, scene, camera, rig, ship, post, hud, sun, profile: PROFILE,
     setTime(t) { simTime = t; tick(0); },
     setView(view) {
       const p = typeof view === 'string' ? POIS.find((x) => x.id === view) : view;
@@ -255,6 +280,7 @@ async function init() {
       if (p.up) camera.up.copy(p.up);
       rig.set(pos, tgt, p.fov || 50);
       if (p.up) { camera.up.copy(p.up); camera.lookAt(tgt); }
+      shadowOverride = p.shadow ? { center: new THREE.Vector3(...p.shadow.center), radius: p.shadow.radius } : null;
     },
     renderStill,
     setUI(on) { hud.toggleUI(!on); },
@@ -309,9 +335,11 @@ async function init() {
       const x = Math.min(1, introT / 40);
       const e = 1 - Math.pow(1 - x, 2);
       camera.position.copy(introShot.from.pos).lerp(introShot.to.pos, e);
-      camera.lookAt(introShot.from.target.clone().lerp(introShot.to.target, e));
+      const it = introShot.from.target.clone().lerp(introShot.to.target, e);
+      camera.lookAt(it);
       camera.fov = introShot.fov; camera.updateProjectionMatrix();
       rig.orbit.target.copy(introShot.to.target);
+      rig.focus.copy(it);
       tickNoRig(dt);
     } else {
       tick(dt);
@@ -319,7 +347,7 @@ async function init() {
     render();
     hud.updateLabels(camera, window.innerWidth, window.innerHeight);
     if ((frames & 7) === 0) {
-      hud.telemetry({ simTime, range: camera.position.length() });
+      hud.telemetry({ simTime, range: camera.position.distanceTo(PROFILE.rangeOrigin || ORIGIN) });
     }
     // adaptive resolution: step down if we are well below 30 fps
     acc += dt; frames++;
@@ -338,12 +366,13 @@ async function init() {
   }
   function tickNoRig(dt) {
     ship.update(simTime);
-    traffic.update(simTime);
     planet.update(simTime);
     lightUniforms.uTime.value = simTime;
     sun.update(camera, simTime);
+    fitShadow();
     stars.position.copy(camera.position);
     post.updateSun(camera, WORLD.sunDir);
+    ship.frame?.(camera, simTime);
   }
   resolveReady(api);
   loop();

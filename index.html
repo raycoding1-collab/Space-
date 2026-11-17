@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>VESPERA — Capital Starship</title>
+  <title>VESPERA · ELYSION</title>
   <meta name="description" content="Explore VESPERA, a 5.8-kilometre capital starship carrying 86,000 souls. Real-time WebGL." />
   <link rel="stylesheet" href="styles.css" />
   <script type="importmap">
@@ -28,8 +28,8 @@
           <line x1="60" y1="4" x2="60" y2="116" class="axis" />
         </svg>
       </div>
-      <div class="loader-title">VESPERA</div>
-      <div class="loader-sub">Capital Starship · Hull 01</div>
+      <div class="loader-title" id="loader-title">&nbsp;</div>
+      <div class="loader-sub" id="loader-sub">&nbsp;</div>
       <div class="loader-bar"><div id="loader-fill"></div></div>
       <div id="loader-stage" class="loader-stage">Initialising</div>
     </div>
@@ -37,10 +37,10 @@
 
   <!-- Intro title -->
   <div id="intro" class="intro hidden">
-    <div class="intro-kicker">Flagship of the Outer Reach · High orbit of Aurelis</div>
-    <h1 class="intro-title">VESPERA</h1>
+    <div class="intro-kicker" id="intro-kicker">Flagship of the Outer Reach · High orbit of Aurelis</div>
+    <h1 class="intro-title" id="intro-title">VESPERA</h1>
     <div class="intro-line"></div>
-    <p class="intro-text">Five point eight kilometres of layered armour, light and machinery. Eighty-six thousand souls aboard. A city that crosses between stars.</p>
+    <p class="intro-text" id="intro-text">Five point eight kilometres of layered armour, light and machinery. Eighty-six thousand souls aboard. A city that crosses between stars.</p>
     <div class="intro-actions">
       <button id="btn-tour" class="btn primary">Begin the guided tour</button>
       <button id="btn-explore" class="btn">Explore freely</button>
@@ -50,8 +50,12 @@
   <!-- HUD -->
   <div id="hud" class="hud hidden">
     <header class="hud-brand">
-      <div class="brand-name">VESPERA</div>
-      <div class="brand-sub">Capital Starship · CS-01</div>
+      <div class="brand-name" id="brand-name">VESPERA</div>
+      <div class="brand-sub" id="brand-sub">Capital Starship · CS-01</div>
+      <nav class="ship-switch" aria-label="Choose a ship">
+        <a href="?" data-ship="vespera">Vespera</a>
+        <a href="?ship=city" data-ship="city">Elysion</a>
+      </nav>
     </header>
 
     <nav id="poi-list" class="poi-list" aria-label="Points of interest"></nav>
@@ -64,9 +68,9 @@
     </section>
 
     <section class="telemetry" aria-label="Ship telemetry">
-      <div class="t-row"><span>Souls aboard</span><b id="t-pop">86,400</b></div>
-      <div class="t-row"><span>Length</span><b>5.79 km</b></div>
-      <div class="t-row"><span>Fleet clock</span><b id="t-clock">—</b></div>
+      <div class="t-row"><span id="t-k0">Souls aboard</span><b id="t-v0">86,400</b></div>
+      <div class="t-row"><span id="t-k1">Length</span><b id="t-v1">5.79 km</b></div>
+      <div class="t-row"><span id="t-clock-label">Fleet clock</span><b id="t-clock">—</b></div>
       <div class="t-row"><span>Velocity</span><b id="t-vel">—</b></div>
       <div class="t-row"><span>Camera range</span><b id="t-range">—</b></div>
     </section>

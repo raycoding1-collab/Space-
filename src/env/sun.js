@@ -51,7 +51,7 @@ void main() {
 }
 `;
 
-export function createSun({ shadowMapSize = 4096 } = {}) {
+export function createSun({ shadowMapSize = 4096, shadow = null } = {}) {
   const group = new THREE.Group();
   group.name = 'sun';
 
@@ -77,28 +77,69 @@ export function createSun({ shadowMapSize = 4096 } = {}) {
   const diskAngular = 0.0068; // radians (≈0.39°)
   mat.uniforms.uSize.value = (dist * Math.tan(diskAngular)) / mat.uniforms.uDisk.value;
 
+  // Shadow coverage: a fixed box around the ship, or (adaptive) a box that follows the camera's focus.
+  const S = shadow || { adaptive: false, center: new THREE.Vector3(0, 0, 300), halfX: 1150, halfZ: 3350, dist: 10000, near: 100, far: 22000, normalBias: 1.2 };
+
   // Key light
   const light = new THREE.DirectionalLight(WORLD.sunColor, WORLD.sunIntensity);
   light.castShadow = true;
   light.shadow.mapSize.set(shadowMapSize / 2, shadowMapSize);
   const cam = light.shadow.camera;
   cam.up.set(0, 0, 1);
-  cam.left = -1150; cam.right = 1150;
-  cam.top = 3350; cam.bottom = -3350;
-  cam.near = 100; cam.far = 22000;
+  cam.near = S.near; cam.far = S.far;
   light.shadow.bias = -0.0004;
-  light.shadow.normalBias = 1.2;
+  light.shadow.normalBias = S.normalBias;
   light.shadow.radius = 2;
   const target = new THREE.Object3D();
-  target.position.set(0, 0, 300);
   light.target = target;
-  light.position.copy(WORLD.sunDir).multiplyScalar(10000).add(target.position);
+
+  // light-space axes (match the shadow camera's orientation: looking along -sunDir with up = +Z)
+  const fwd = WORLD.sunDir.clone().negate();
+  const ax = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 0, 1), fwd).normalize(); // camera right... sign irrelevant
+  const ay = new THREE.Vector3().crossVectors(fwd, ax).normalize();
+  const _c = new THREE.Vector3();
+
+  function place(center, hx, hz) {
+    cam.left = -hx; cam.right = hx;
+    cam.top = hz; cam.bottom = -hz;
+    cam.updateProjectionMatrix();
+    target.position.copy(center);
+    light.position.copy(WORLD.sunDir).multiplyScalar(S.dist).add(center);
+    target.updateMatrixWorld();
+  }
+  place(S.center, S.halfX, S.halfZ);
+
+  /**
+   * Fit the shadow box around a focus point. `radius` is the half-size wanted near the focus; it is
+   * clamped to the ship's full coverage. The centre snaps to whole texels so shadows don't shimmer.
+   */
+  function fit(focus, radius) {
+    if (!S.adaptive) return;
+    const hx = Math.min(S.halfX, Math.max(S.minHalf || 400, radius));
+    const hz = Math.min(S.halfZ, Math.max(S.minHalf || 400, radius * (S.aspect || 1)));
+    // keep the box inside the ship's coverage region
+    _c.copy(focus);
+    const lx = _c.dot(ax), ly = _c.dot(ay), lz = _c.dot(fwd);
+    const cx0 = S.center.dot(ax), cy0 = S.center.dot(ay);
+    let px = THREE.MathUtils.clamp(lx, cx0 - S.halfX + hx, cx0 + S.halfX - hx);
+    let py = THREE.MathUtils.clamp(ly, cy0 - S.halfZ + hz, cy0 + S.halfZ - hz);
+    const tx = (2 * hx) / light.shadow.mapSize.x, ty = (2 * hz) / light.shadow.mapSize.y;
+    px = Math.round(px / tx) * tx;
+    py = Math.round(py / ty) * ty;
+    const lzC = S.center.dot(fwd);
+    _c.set(0, 0, 0).addScaledVector(ax, px).addScaledVector(ay, py).addScaledVector(fwd, lzC);
+    light.shadow.normalBias = S.normalBias * Math.max(tx, ty);
+    place(_c, hx, hz);
+    void lz;
+  }
 
   return {
     group,
     light,
     target,
     material: mat,
+    fit,
+    adaptive: !!S.adaptive,
     update(camera, t) {
       billboard.position.copy(camera.position).addScaledVector(WORLD.sunDir, dist);
       mat.uniforms.uTime.value = t;

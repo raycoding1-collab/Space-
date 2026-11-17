@@ -6,18 +6,20 @@ import { clamp } from '../lib/rng.js';
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
 export class CameraRig {
-  constructor(camera, dom) {
+  constructor(camera, dom, opts = {}) {
     this.camera = camera;
     this.dom = dom;
+    this.opts = { maxDistance: 90000, minDistance: 25, flySpeed: 160, flyMax: 6000, arc: 'axis', ...opts };
     this.mode = 'orbit';
+    this.focus = new THREE.Vector3();
     this.orbit = new OrbitControls(camera, dom);
     this.orbit.enableDamping = true;
     this.orbit.dampingFactor = 0.06;
     this.orbit.rotateSpeed = 0.55;
     this.orbit.zoomSpeed = 1.1;
     this.orbit.panSpeed = 0.9;
-    this.orbit.minDistance = 25;
-    this.orbit.maxDistance = 90000;
+    this.orbit.minDistance = this.opts.minDistance;
+    this.orbit.maxDistance = this.opts.maxDistance;
     this.orbit.zoomToCursor = true;
     this.orbit.screenSpacePanning = true;
     this.transition = null;
@@ -26,7 +28,7 @@ export class CameraRig {
     // fly state
     this.keys = new Set();
     this.vel = new THREE.Vector3();
-    this.flySpeed = 160;
+    this.flySpeed = this.opts.flySpeed;
     this.look = { dx: 0, dy: 0 };
     this.dragging = false;
     this._bindFly();
@@ -39,7 +41,7 @@ export class CameraRig {
     if (mode === 'orbit') {
       // re-target in front of the camera at a sensible distance
       const dir = this.camera.getWorldDirection(new THREE.Vector3());
-      const d = clamp(this.camera.position.length() * 0.6, 200, 8000);
+      const d = clamp(this.camera.position.distanceTo(this.focus) || this.camera.position.length() * 0.6, 200, this.opts.maxDistance * 0.1);
       this.orbit.target.copy(this.camera.position).addScaledVector(dir, d);
       this.orbit.update();
     }
@@ -57,8 +59,15 @@ export class CameraRig {
     const dur = duration ?? clamp(2.2 + Math.log10(1 + dist) * 1.1, 2.5, 7.5);
     // control point lifted away from the ship axis to avoid flying through structure
     const mid = p0.clone().add(pos).multiplyScalar(0.5);
-    const radial = new THREE.Vector3(mid.x, mid.y, 0);
-    if (radial.lengthSq() < 1) radial.set(1, 0.4, 0);
+    let radial;
+    if (this.opts.arc === 'up') {
+      // flat ships: arc over the deck (or under the keel when both ends are below it)
+      const below = p0.y < this.opts.belowY && pos.y < this.opts.belowY;
+      radial = new THREE.Vector3(mid.x / (this.opts.halfBeam || 1e4) * 0.6, below ? -1 : 1, 0);
+    } else {
+      radial = new THREE.Vector3(mid.x, mid.y, 0);
+      if (radial.lengthSq() < 1) radial.set(1, 0.4, 0);
+    }
     radial.normalize();
     const lift = Math.max(600, dist * 0.35);
     const ctrl = mid.clone().addScaledVector(radial, lift);
@@ -77,6 +86,7 @@ export class CameraRig {
     if (fov) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
     this.orbit.target.copy(target);
     this.orbit.update();
+    this.focus.copy(target);
   }
 
   update(dt) {
@@ -91,6 +101,7 @@ export class CameraRig {
       const tgt = tr.t0.clone().lerp(tr.t1, ease(clamp(x * 1.15, 0, 1)));
       cam.up.set(0, 1, 0);
       cam.lookAt(tgt);
+      this.focus.copy(tgt);
       cam.fov = THREE.MathUtils.lerp(tr.fov0, tr.fov1, e);
       cam.updateProjectionMatrix();
       if (x >= 1) {
@@ -104,8 +115,11 @@ export class CameraRig {
     if (this.mode === 'orbit') {
       // scale zoom/pan sensitivity with distance so both 30 m and 30 km feel right
       this.orbit.update();
+      this.focus.copy(this.orbit.target);
     } else if (this.mode === 'fly') {
       this._updateFly(dt);
+      const dir = cam.getWorldDirection(new THREE.Vector3());
+      this.focus.copy(cam.position).addScaledVector(dir, clamp(this.flySpeed * 6, 300, 6000));
     }
   }
 
@@ -134,7 +148,7 @@ export class CameraRig {
     dom.addEventListener('wheel', (e) => {
       if (this.mode !== 'fly') return;
       e.preventDefault();
-      this.flySpeed = clamp(this.flySpeed * (e.deltaY > 0 ? 0.82 : 1.22), 4, 6000);
+      this.flySpeed = clamp(this.flySpeed * (e.deltaY > 0 ? 0.82 : 1.22), 4, this.opts.flyMax);
       this.onSpeed?.(this.flySpeed);
     }, { passive: false });
     // touch: one finger looks, two fingers move forward
@@ -214,6 +228,7 @@ export class Tour {
     cam.up.set(0, 1, 0);
     if (s.up) cam.up.copy(s.up);
     cam.lookAt(tgt);
+    this.rig.focus.copy(tgt);
     const fov = s.fov ?? 50;
     if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
     // fades between shots
