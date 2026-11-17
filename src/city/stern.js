@@ -158,7 +158,7 @@ export function buildStern(M, ctx) {
     const secs = rings.map((rr) => rr.map(([a, b, c]) => [a, b, c]));
     const geoS = new Shape();
     geoS.loft(secs.map((sec) => sec.map(([a, b, c]) => [a, b - y, c - Z_BOW])), 0, { closed: true, crease: 20 });
-    const mesh = new THREE.Mesh(geoS.toGeometry(), crystalMat(2.2));
+    const mesh = new THREE.Mesh(geoS.toGeometry(), crystalMat(1.3));
     mesh.position.set(0, y, Z_BOW);
     root.add(mesh);
     void g;

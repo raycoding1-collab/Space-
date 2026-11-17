@@ -9,7 +9,7 @@ import { SPIRE, HALO, PLATEAUS } from './layout.js';
 import { TAU, RNG } from '../lib/rng.js';
 import { LightSet, NAV } from '../ship/lights.js';
 import { LOGDEPTH_VERT_PARS, LOGDEPTH_VERT, LOGDEPTH_FRAG_PARS, LOGDEPTH_FRAG } from '../lib/glsl.js';
-import { CITY_U, HAZE_GLSL } from './shaders.js';
+import { CITY_U, HAZE_GLSL, COMMON_GLSL } from './shaders.js';
 import { buildTrees } from './districts.js';
 
 const Y0 = PLATEAUS[4].h; // 620
@@ -38,6 +38,7 @@ void main() {
 }`;
 const CRYSTAL_FRAG = /* glsl */ `
 ${LOGDEPTH_FRAG_PARS}
+${COMMON_GLSL}
 uniform float uCityTime;
 uniform float uBase;
 ${HAZE_GLSL}
@@ -47,13 +48,18 @@ void main() {
   vec3 N = normalize(vN);
   float ndv = abs(dot(N, V));
   float fres = pow(1.0 - ndv, 3.0);
-  // inner light rising through the crystal, brightest at its heart
   float h = vL.y;
-  float pulse = 0.75 + 0.25 * sin(uCityTime * 0.9 - h * 0.02);
-  vec3 inner = mix(vec3(1.0, 0.72, 0.42), vec3(0.75, 0.88, 1.0), smoothstep(0.0, 500.0, h)) * (0.55 + 0.6 * pow(ndv, 2.0)) * pulse;
+  // light rising through the crystal: warm at the root, cool toward the tips, with drifting veins
+  float pulse = 0.78 + 0.22 * sin(uCityTime * 0.9 - h * 0.02);
+  float ang = atan(vL.x, vL.z);
+  float veins = vnoise(vec2(ang * 7.0, h * 0.025 - uCityTime * 0.08)) * 0.6 + vnoise(vec2(ang * 19.0, h * 0.07)) * 0.4;
+  vec3 tint = mix(vec3(1.0, 0.66, 0.36), vec3(0.62, 0.8, 1.0), smoothstep(0.0, 520.0, h));
+  vec3 inner = tint * (0.3 + 0.7 * pow(ndv, 1.5)) * pulse * mix(0.55, 1.25, veins);
+  // facets: every flat face catches light differently; their edges glint
   float facet = 0.5 + 0.5 * sin(dot(N, vec3(13.0, 7.0, 11.0)));
-  vec3 refl = vec3(0.7, 0.8, 1.0) * fres * 1.4 + vec3(1.0, 0.92, 0.8) * pow(max(dot(reflect(-V, N), uSunDirC), 0.0), 60.0) * 6.0;
-  vec3 col = (inner * uBase * (0.7 + 0.3 * facet) + refl);
+  float edge = clamp(length(fwidth(N)) * 6.0, 0.0, 1.0);
+  vec3 refl = vec3(0.7, 0.8, 1.0) * fres * 1.1 + vec3(1.0, 0.92, 0.8) * pow(max(dot(reflect(-V, N), uSunDirC), 0.0), 80.0) * 4.0;
+  vec3 col = inner * uBase * (0.45 + 0.55 * facet) + refl + tint * edge * 1.6;
   gl_FragColor = vec4(applyHaze(col, vW), 1.0);
   ${LOGDEPTH_FRAG}
 }`;
@@ -178,7 +184,7 @@ export function buildSpire(M, ctx) {
 
   // ---------------------------------------------------------------- crystalline crown
   const crystalMat = new THREE.ShaderMaterial({
-    uniforms: { uCityTime: CITY_U.uCityTime, uSunDirC: CITY_U.uSunDirC, uBase: { value: 1.6 },
+    uniforms: { uCityTime: CITY_U.uCityTime, uSunDirC: CITY_U.uSunDirC, uBase: { value: 1.05 },
       uHazeC: CITY_U.uHazeC, uHazeR: CITY_U.uHazeR, uHazeK: CITY_U.uHazeK, uHazeFloor: CITY_U.uHazeFloor, uHazeCol: CITY_U.uHazeCol },
     vertexShader: CRYSTAL_VERT, fragmentShader: CRYSTAL_FRAG,
   });
@@ -244,10 +250,10 @@ export function buildSpire(M, ctx) {
     // lens section: garden deck on top, glazed galleries on both rims, a keel of lights beneath
     const prof = [
       [R - w / 2 - 6, y + 4], [R - w / 2, y + 12], [R - w / 2 + 14, y + 16],
-      [R + w / 2 - 14, y + 16], [R + w / 2, y + 12], [R + w / 2 + 6, y + 4],
+      [R - 9, y + 16], [R + 9, y + 16], [R + w / 2 - 14, y + 16], [R + w / 2, y + 12], [R + w / 2 + 6, y + 4],
       [R + w / 2 - 10, y - 14], [R + 18, y - 34], [R - 18, y - 34], [R - w / 2 + 10, y - 14],
     ];
-    const zones = [Z.GLASS, Z.METAL, Z.GARDEN, Z.METAL, Z.GLASS, Z.FACADE, Z.CLAD, Z.TRIM, Z.CLAD, Z.FACADE];
+    const zones = [Z.GLASS, Z.METAL, Z.GARDEN, Z.STONE, Z.GARDEN, Z.METAL, Z.GLASS, Z.FACADE, Z.CLAD, Z.TRIM, Z.CLAD, Z.FACADE];
     for (let i = 0; i < prof.length; i++) {
       const a = prof[i], b = prof[(i + 1) % prof.length];
       HB.get(M.haloMat).loft([ringAt(a[0], a[1]), ringAt(b[0], b[1])], zones[i], { closed: true, crease: 60, orient: (p) => {
@@ -275,10 +281,12 @@ export function buildSpire(M, ctx) {
     // trees along the garden deck
     const trees = [];
     for (let k = 0; k < 900; k++) {
-      const a = rng.range(0, TAU), r = R + rng.range(-w / 2 + 22, w / 2 - 22);
+      const a = rng.range(0, TAU);
+      let r = R + rng.range(-w / 2 + 22, w / 2 - 22);
+      if (Math.abs(r - R) < 14) r += Math.sign(r - R || 1) * 14;
       trees.push([Math.sin(a) * r, y + 16, Math.cos(a) * r, rng.range(0.7, 1.2), rng.next()]);
     }
-    buildTrees(halo, trees, M, 'halo-trees');
+    buildTrees(halo, trees, M, 'halo-trees', { fine: true });
     const hl = new LightSet();
     for (let k = 0; k < 96; k++) {
       const a = (k / 96) * TAU;

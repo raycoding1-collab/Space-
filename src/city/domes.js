@@ -4,7 +4,7 @@
 //   Orchard Dome — concentric stepped crop terraces and orchards, under a diagrid lamella frame
 import * as THREE from 'three';
 import { DOMES, DOME_RING } from './layout.js';
-import { Shape, ShapeBatch, Z, circle } from './geo.js';
+import { Shape, ShapeBatch, Z, circle, rect } from './geo.js';
 import { beamMatrix } from '../lib/geo.js';
 import { RNG, TAU, smoothstep as sm, clamp } from '../lib/rng.js';
 import { cityPatch, CITY_U, HAZE_GLSL, COMMON_GLSL } from './shaders.js';
@@ -231,7 +231,16 @@ export function buildDomes(M, ctx, envTex) {
       const cx = d.x + Math.sin(a) * (ro + 4), cz = d.z + Math.cos(a) * (ro + 4);
       const sh = new Shape();
       sh.prism([[-60, -10], [60, -10], [60, 14], [-60, 14]], 0, rp + 26, Z.STONE, Z.METAL);
-      sh.prism([[-34, 14], [34, 14], [34, 15.5], [-34, 15.5]], 0, rp - 10, Z.TRIM, null);
+      // glazed portal with a lit frame, a gilded lintel and flanking pylons
+      sh.prism([[-34, 14], [34, 14], [34, 15.2], [-34, 15.2]], 0, rp - 10, Z.GLASS, null);
+      for (const x of [-35.2, 35.2]) sh.prism(rect(1.4, 1.8, x, 15), 0, rp - 9, Z.TRIM, null);
+      sh.prism([[-36, 14.1], [36, 14.1], [36, 15.9], [-36, 15.9]], rp - 10, rp - 8.6, Z.TRIM, null);
+      sh.prism([[-46, 13], [46, 13], [46, 19], [-46, 19]], rp - 8.6, rp + 2, Z.METAL, Z.METAL);
+      for (const x of [-53, 53]) {
+        sh.prism(rect(12, 8, x, 16), 0, rp + 48, Z.STONE, Z.METAL);
+        sh.prism(rect(2, 1, x, 20.4), 8, rp + 40, Z.TRIM, null);
+        sh.cone(x, 16, 4, 0.4, rp + 48, rp + 70, Z.METAL, 4);
+      }
       B.get(M.stone).add(sh, new THREE.Matrix4().makeRotationY(a).setPosition(cx, 0, cz));
     }
 

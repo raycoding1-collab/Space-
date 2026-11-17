@@ -9,6 +9,7 @@ import {
   CANAL, DOMES, DOME_RING, CONSTRUCTION, transitDist,
 } from './layout.js';
 import * as A from './archetypes.js';
+import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const ARCH_MATS = {
   blade: ['spireFins', 'spireGlass', 'spireDark', 'spireRose', 'spireJade'],
@@ -290,7 +291,7 @@ function plazaFeature(B, lib, rng, dc) {
 }
 
 function parkTrees(B, rng, trees) {
-  const step = 17;
+  const step = 21;
   for (let x = B.x0 + 8; x < B.x1 - 8; x += step) {
     for (let z = B.z0 + 8; z < B.z1 - 8; z += step) {
       if (rng.chance(0.38)) continue;
@@ -299,17 +300,30 @@ function parkTrees(B, rng, trees) {
   }
 }
 
-export function buildTrees(parent, trees, M, name = 'trees') {
-  // crown: a lumpy low-poly blob; trunk: a short hexagonal column
-  const crown = new THREE.IcosahedronGeometry(1, 0);
-  const pos = crown.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const k = 1 + 0.18 * Math.sin(x * 5.1 + z * 3.3) * Math.cos(y * 4.7);
-    pos.setXYZ(i, x * 6.5 * k, 9 + y * 5.5 * k, z * 6.5 * k);
-  }
-  crown.computeVertexNormals();
-  const trunk = new THREE.CylinderGeometry(0.5, 0.8, 6, 5, 1, true).translate(0, 3, 0);
+export function buildTrees(parent, trees, M, name = 'trees', { fine = false } = {}) {
+  // crown: two or three smooth, lumpy canopy masses; trunk: a tapered column with a fork
+  const det = 1;
+  const blob = (r, cx, cy, cz, sq, seed) => {
+    let g = new THREE.IcosahedronGeometry(1, det);
+    g.deleteAttribute('normal'); g.deleteAttribute('uv');
+    g = mergeVertices(g);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const k = 1 + 0.16 * Math.sin(x * 4.3 + seed) * Math.cos(y * 3.7 + z * 2.9) + 0.08 * Math.sin(z * 9.1 + x * 7.7 + seed);
+      p.setXYZ(i, cx + x * r * k, cy + y * r * sq * k, cz + z * r * k);
+    }
+    g.computeVertexNormals();
+    return g;
+  };
+  const parts = fine
+    ? [blob(5.2, 0, 10.5, 0, 0.82, 1), blob(3.8, 2.6, 13.2, 1.2, 0.85, 2), blob(3.4, -2.4, 12.4, -1.6, 0.85, 3)]
+    : [blob(6.0, 0, 10.8, 0, 0.84, 1)];
+  const crown = mergeGeometries(parts.map((g) => g.toNonIndexed()));
+  const trunk = fine ? mergeGeometries([
+    new THREE.CylinderGeometry(0.35, 0.75, 9, 6, 1, true).translate(0, 4.5, 0).toNonIndexed(),
+    new THREE.CylinderGeometry(0.18, 0.3, 4, 5, 1, true).rotateZ(0.6).translate(1.2, 9.5, 0).toNonIndexed(),
+  ]) : new THREE.CylinderGeometry(0.4, 0.75, 7, 5, 1, true).translate(0, 3.5, 0).toNonIndexed();
   const merged = mergeTree(crown, trunk);
   const mat = M.foliage;
   const mesh = new THREE.InstancedMesh(merged, mat, trees.length);
@@ -329,7 +343,7 @@ export function buildTrees(parent, trees, M, name = 'trees') {
 
 function mergeTree(crown, trunk) {
   const g = new THREE.BufferGeometry();
-  const a = crown.toNonIndexed(), b = trunk.toNonIndexed();
+  const a = crown.index ? crown.toNonIndexed() : crown, b = trunk.index ? trunk.toNonIndexed() : trunk;
   const P = [...a.attributes.position.array, ...b.attributes.position.array];
   const N = [...a.attributes.normal.array, ...b.attributes.normal.array];
   // vertex colour: trunk dark, crown white (multiplied by the instance colour)

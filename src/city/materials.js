@@ -182,7 +182,7 @@ export function createCityMaterials() {
   M.frameWhite = hazed(new THREE.MeshStandardMaterial({ color: C(0.86, 0.86, 0.84), metalness: 0.7, roughness: 0.32 }));
   M.frameBronze = hazed(new THREE.MeshStandardMaterial({ color: C(0.52, 0.37, 0.22), metalness: 0.9, roughness: 0.34 }));
   M.frameGold = hazed(new THREE.MeshStandardMaterial({ color: C(0.92, 0.74, 0.44), metalness: 1.0, roughness: 0.28 }));
-  M.foliage = hazed(new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.9, metalness: 0.0 }));
+  M.foliage = cityPatch(new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.9, metalness: 0.0 }), 'foliage');
   M.U = CITY_U;
   return M;
 }

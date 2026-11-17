@@ -53,7 +53,7 @@ export function buildCanal(M, ctx, envTex) {
     // trees and lanterns along the quay
     const trees = [];
     for (let z = z0 + 20; z < z1 - 20; z += 26) trees.push([side * (XW - 46), QY, z + rng.range(-4, 4), rng.range(0.7, 1.0), rng.next()]);
-    buildTrees(root, trees, M, 'quay-trees');
+    buildTrees(root, trees, M, 'quay-trees', { fine: true });
     for (let z = z0 + 13; z < z1; z += 52) lights.add(new THREE.Vector3(side * (CANAL.halfW + 4), QY + 6, z), NAV.warm, { intensity: 3, size: 2.2 });
   }
   // canal floor and ends

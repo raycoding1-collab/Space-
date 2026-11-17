@@ -142,7 +142,8 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
   }
   vec2 c = vec2(f.x / bayW, f.y / floorH);
   vec2 w = max(fwidth(c), vec2(1e-5));
-  float far = smoothstep(0.18, 0.75, max(w.x, w.y));
+  float far = smoothstep(0.1, 0.45, max(w.x, w.y));
+  float bumpK = 1.0 - smoothstep(0.035, 0.14, max(w.x, w.y));
   float du = 0.86, dv = 0.78, recess = 0.35;
   vec3 frame = uFrame;
   float fRough = 0.42, fMetal = 0.7;
@@ -186,8 +187,8 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
     h += (1.0 - win) * sin(3.14159 * clamp((s - (0.5 - (1.0 - du) * 0.5)) / (1.0 - du) + 0.5, 0.0, 1.0)) * 0.9;
   }
   vec3 alb = mix(frame, glass, win);
-  float rough = mix(fRough, 0.1, win);
-  float metal = mix(fMetal, 0.88, win);
+  float rough = mix(fRough, 0.17, win);
+  float metal = mix(fMetal, 0.72, win);
   vec3 emis = win * lit * br * grad * litColour(warm, r2);
   if (pat == 4) {
     // diagrid: diagonal structure over a curtain wall
@@ -245,7 +246,7 @@ CS facade(vec2 f, int pat, float floorH, float bayW, float colEvery, float mechE
   emis = mix(emis, vec3(1.0, 0.8, 0.55) * 1.1 * fpc(c.x, w.x, 0.92), lobby * 0.8);
   alb = mix(alb, uGlass, lobby * 0.8);
   h -= win * recess;
-  o.alb = alb; o.rough = rough; o.metal = metal; o.emis = emis * uLitI; o.h = h * (1.0 - far); o.ao = 1.0;
+  o.alb = alb; o.rough = rough; o.metal = metal; o.emis = emis * uLitI; o.h = h * bumpK * 0.55; o.ao = 1.0;
   return o;
 }
 
@@ -302,8 +303,14 @@ CS garden(vec2 f, vec3 wp) {
   float clump = mix(smoothstep(0.35, 0.75, n1 * 0.7 + n2 * 0.3), 0.55, far);
   vec3 dark = vec3(0.035, 0.07, 0.03), mid = vec3(0.09, 0.16, 0.05), light = vec3(0.18, 0.26, 0.09);
   vec3 alb = mix(dark, mix(mid, light, n2), clump);
-  float flower = step(0.93, hashI(floor(wp.xz / 1.3))) * (1.0 - far);
-  alb = mix(alb, mix(vec3(0.7, 0.35, 0.4), vec3(0.85, 0.75, 0.4), hashI(floor(wp.xz / 1.3) + 5.0)), flower * 0.7);
+  vec2 fc = wp.xz / 1.3, fi = floor(fc);
+  vec2 jit = vec2(hashI(fi + 3.0), hashI(fi + 9.0)) * 0.5 + 0.25;
+  float fr = length(fract(fc) - jit);
+  float ffw = max(fwidth(fc.x), 1e-4);
+  float flower = step(0.9, hashI(fi)) * (1.0 - smoothstep(0.14 - ffw, 0.14 + ffw, fr)) * (1.0 - far);
+  alb = mix(alb, mix(vec3(0.75, 0.32, 0.42), vec3(0.9, 0.78, 0.38), hashI(fi + 5.0)), flower * 0.8);
+  float blades = vnoise(wp.xz * 2.7) * 0.5 + vnoise(wp.xz * 6.1) * 0.5;
+  alb *= mix(1.0, mix(0.8, 1.15, blades), 1.0 - smoothstep(0.15, 0.8, fw));
   o.alb = alb; o.rough = 0.88; o.metal = 0.0; o.emis = vec3(0.0); o.h = clump * 1.2 * (1.0 - far); o.ao = mix(0.75, 1.0, clump);
   return o;
 }
@@ -610,6 +617,24 @@ CS water(vec3 wp) {
 }
 `;
 
+// ------------------------------------------------------------------ foliage (tree crowns)
+const FOLIAGE = /* glsl */ `
+struct CS { vec3 alb; float rough; float metal; vec3 emis; float h; float ao; };
+CS foliage(vec3 wp, vec3 base, vec3 wn) {
+  CS o;
+  float fw = fwidth(wp.x) + fwidth(wp.y) + fwidth(wp.z);
+  float far = smoothstep(0.25, 2.0, fw);
+  vec3 q = wp * 0.85;
+  float n = vnoise(q.xz + q.y * 0.71) * 0.55 + vnoise(q.zy * 2.3 + q.x * 0.3) * 0.3 + vnoise(q.xy * 4.9) * 0.15;
+  float clump = mix(n, 0.5, far);
+  float top = clamp(wn.y * 0.5 + 0.5, 0.0, 1.0);
+  o.alb = base * mix(0.55, 1.3, clump) * mix(0.75, 1.12, top);
+  o.rough = 0.82; o.metal = 0.0; o.emis = vec3(0.0);
+  o.h = clump * 0.9 * (1.0 - far); o.ao = mix(0.65, 1.0, clump * 0.6 + top * 0.4);
+  return o;
+}
+`;
+
 // ------------------------------------------------------------------ material patching
 const VERT_PARS = /* glsl */ `
 attribute vec2 aFac;
@@ -667,6 +692,7 @@ export function cityPatch(mat, kind, uniforms = {}, { groundMode = 'cart', key =
     let surf = '', call = '';
     if (kind === 'facade') { surf = FACADE; call = 'CS cs = citySurface(vFacC, vZoneC, vSeedC, vWorldC);'; }
     else if (kind === 'plating') { surf = PLATING; call = 'CS cs = plating(vWorldC, normalize(vWNormC), uSeed * 31.0);'; }
+    else if (kind === 'foliage') { surf = FOLIAGE; call = 'CS cs = foliage(vWorldC, diffuseColor.rgb, normalize(vWNormC));'; }
     else if (kind === 'terrain') { surf = TERRAIN; call = 'CS cs = terrain(vWorldC, normalize(vWNormC));'; }
     else if (kind === 'water') { surf = WATER; call = 'CS cs = water(vWorldC);'; }
     else if (kind === 'ground') {
