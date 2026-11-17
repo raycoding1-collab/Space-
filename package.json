@@ -1,0 +1,23 @@
+{
+  "name": "space-",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raycoding1-collab/Space-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/raycoding1-collab/Space-/issues"
+  },
+  "homepage": "https://github.com/raycoding1-collab/Space-#readme",
+  "dependencies": {
+    "three": "^0.187.0"
+  }
+}

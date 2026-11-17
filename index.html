@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>VESPERA — Generation Ark</title>
+  <meta name="description" content="Explore VESPERA, a seven-kilometre generation ark carrying 48,000 people between the stars. Real-time WebGL." />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="viewport" tabindex="0" aria-label="VESPERA 3D view"></canvas>
+
+  <!-- Loading -->
+  <div id="loader" class="loader">
+    <div class="loader-inner">
+      <div class="loader-mark">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" class="ring r1" />
+          <circle cx="60" cy="60" r="40" class="ring r2" />
+          <line x1="60" y1="4" x2="60" y2="116" class="axis" />
+        </svg>
+      </div>
+      <div class="loader-title">VESPERA</div>
+      <div class="loader-sub">Generation Ark · Hull 01</div>
+      <div class="loader-bar"><div id="loader-fill"></div></div>
+      <div id="loader-stage" class="loader-stage">Initialising</div>
+    </div>
+  </div>
+
+  <!-- Intro title -->
+  <div id="intro" class="intro hidden">
+    <div class="intro-kicker">Year 214 of the Crossing · High orbit of Aurelis</div>
+    <h1 class="intro-title">VESPERA</h1>
+    <div class="intro-line"></div>
+    <p class="intro-text">A seven-kilometre generation ark. Forty-eight thousand people. One slow voyage between the stars.</p>
+    <div class="intro-actions">
+      <button id="btn-tour" class="btn primary">Begin the guided tour</button>
+      <button id="btn-explore" class="btn">Explore freely</button>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hud hidden">
+    <header class="hud-brand">
+      <div class="brand-name">VESPERA</div>
+      <div class="brand-sub">Generation Ark · ISV-01</div>
+    </header>
+
+    <nav id="poi-list" class="poi-list" aria-label="Points of interest"></nav>
+
+    <section id="info" class="info-card">
+      <div class="info-kicker" id="info-kicker">Overview</div>
+      <h2 id="info-title">VESPERA</h2>
+      <p id="info-text"></p>
+      <dl id="info-stats" class="info-stats"></dl>
+    </section>
+
+    <section class="telemetry" aria-label="Ship telemetry">
+      <div class="t-row"><span>Population</span><b id="t-pop">48,212</b></div>
+      <div class="t-row"><span>Length</span><b>7.04 km</b></div>
+      <div class="t-row"><span>Mission clock</span><b id="t-clock">—</b></div>
+      <div class="t-row"><span>Halo ring spin</span><b id="t-spin">—</b></div>
+      <div class="t-row"><span>Camera range</span><b id="t-range">—</b></div>
+    </section>
+
+    <div id="caption" class="caption"></div>
+
+    <footer class="hud-bottom">
+      <div class="modes" role="tablist">
+        <button data-mode="tour" class="mode">Tour</button>
+        <button data-mode="orbit" class="mode">Orbit</button>
+        <button data-mode="fly" class="mode">Fly</button>
+      </div>
+      <div id="hint" class="hint"></div>
+      <div class="tools">
+        <button id="btn-labels" class="tool" title="Toggle labels (L)">Labels</button>
+        <button id="btn-capture" class="tool" title="Capture a 3840×2160 still (P)">Capture 4K</button>
+        <button id="btn-quality" class="tool" title="Render quality">Quality: High</button>
+        <button id="btn-hide" class="tool" title="Hide interface (H)">Hide UI</button>
+      </div>
+    </footer>
+  </div>
+
+  <div id="labels" class="labels"></div>
+  <div id="fade" class="fade"></div>
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
