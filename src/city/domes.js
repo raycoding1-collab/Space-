@@ -168,7 +168,7 @@ void main() {
   // fine mullions (spherical coordinates of the shell)
   float ph = atan(vL.x, vL.z) * uMull, th = acos(clamp(normalize(vL - vec3(0.0, -2000.0, 0.0)).y, -1.0, 1.0)) * uMull * 0.8;
   float m = max(fln(ph, max(fwidth(ph), 1e-4), 0.04), fln(th, max(fwidth(th), 1e-4), 0.04)) * step(0.5, uMull);
-  vec3 col = env * F * 1.6 + vec3(sun) * F + uTint * 0.02;
+  vec3 col = env * F * (gl_FrontFacing ? 1.6 : 0.18) + vec3(sun) * F + uTint * 0.02;
   col = mix(col, uTint * 0.25 + env * 0.05, m * 0.7);
   float a = clamp(F * 0.9 + 0.05 + m * 0.5, 0.0, 1.0);
   gl_FragColor = vec4(applyHaze(col, vW), a);
@@ -299,7 +299,7 @@ export function buildDomes(M, ctx, envTex) {
       g.add(wmesh);
       // trees on islands and the shore
       const trees = [];
-      for (let k = 0; k < 9000; k++) {
+      for (let k = 0; k < 22000; k++) {
         const r = Math.sqrt(rng.next()) * R * 0.95, th = rng.range(0, TAU);
         const h = hFn(r, th);
         if (h < water + 4) continue;
