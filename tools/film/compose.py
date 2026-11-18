@@ -120,9 +120,9 @@ def overlay_items(tsec):
     # title card
     tt = starts["finale"] + 2.5
     a = window(tsec, tt, DUR + 5, 2.2, 0.1)
-    items.append(("ELYSION", F_TITLE, 46, BAR + PH * 0.25, a, WHITE))
+    items.append(("ELYSION", F_TITLE, 46, BAR + PH * 0.15, a, WHITE))
     a2 = window(tsec, tt + 1.4, DUR + 5, 1.8, 0.1)
-    items.append(("THE FLYING CITY", F_SUB, 18, BAR + PH * 0.25 + 108, a2 * 0.9, WARM))
+    items.append(("THE FLYING CITY", F_SUB, 18, BAR + PH * 0.15 + 96, a2 * 0.9, WARM))
     return items
 
 
